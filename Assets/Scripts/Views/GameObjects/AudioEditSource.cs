@@ -21,7 +21,7 @@ public class AudioEditSource : MonoBehaviour, IController
     {
         model = this.GetModel<AudioEditModel>();
         this.RegisterEvent<AudioEditChangeEvent>(OnEditAudioChange);
-        this.RegisterEvent<AudioEditTimeChangeEvent>(v=>OnEditTimeChange());
+        this.RegisterEvent<UpdateThisTimeEvent>(v=>OnEditTimeChange());
     }
 
     private void OnEditAudioChange(AudioEditChangeEvent obj)
@@ -36,6 +36,7 @@ public class AudioEditSource : MonoBehaviour, IController
         audioSource.time = model.ThisTime;
         if (!audioSource.isPlaying)
         {
+            audioSource.Stop();
             audioSource.Play(); 
         }
         await UniTask.Delay(10);

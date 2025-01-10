@@ -28,15 +28,11 @@ namespace Qf.Events
     /// <summary>
     /// 更新当前时间UI
     /// </summary>
-    public struct OnUpdateThisTime { };
+    public struct UpdateThisTimeEvent { };
     /// <summary>
     /// 更新鼓点UI
     /// </summary>
     public struct OnUpdateAudioEditDrumsUI { };
-    /// <summary>
-    /// 编辑器时间更新通知,具体时间从model中获得
-    /// </summary>
-    public struct AudioEditTimeChangeEvent { };
     /// <summary>
     /// 编辑器音频文件更新通知
     /// </summary>

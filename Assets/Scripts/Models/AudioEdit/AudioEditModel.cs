@@ -37,7 +37,7 @@ namespace Qf.Models.AudioEdit
                 if (value != thisTime)
                 {
                     thisTime = value;
-                    this.SendEvent<AudioEditTimeChangeEvent>();
+                    this.SendEvent<UpdateThisTimeEvent>();
                 }
             }
         }

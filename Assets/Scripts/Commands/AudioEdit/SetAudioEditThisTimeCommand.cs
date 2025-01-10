@@ -33,7 +33,7 @@ namespace Qf.Commands.AudioEdit
                     audioEditModel.ThisTime = 0;
                 }
             }
-            this.SendEvent<OnUpdateThisTime>();
+            this.SendEvent<UpdateThisTimeEvent>();
         }
     }
 }

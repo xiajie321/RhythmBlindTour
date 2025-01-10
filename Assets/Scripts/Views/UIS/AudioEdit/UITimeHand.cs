@@ -31,14 +31,14 @@ public class UITimeHand : MonoBehaviour, IController, IPointerClickHandler
     }
     private void Start()
     {
-        this.RegisterEvent<OnUpdateThisTime>(v =>
+        this.RegisterEvent<UpdateThisTimeEvent>(v =>
         {
             UpdateThisTime();
         }).UnRegisterWhenGameObjectDestroyed(gameObject);
     }
     private void OnEnable()
     {
-        this.SendEvent<OnUpdateThisTime>();
+        this.SendEvent<UpdateThisTimeEvent>();
     }
     void UpdateThisTime()
     {

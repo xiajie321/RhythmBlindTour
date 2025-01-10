@@ -7,9 +7,9 @@ namespace Qf.Managers {
     public class Managers : MonoSingleton<Managers>, IController
     {
         [SerializeField]
-        AudioClip audioClip;//≤‚ ‘º”‘ÿ±‡º≠∆˜“Ù∆µ
-        [SerializeField]
         List<ManagerBase> ManagerOrderOfExecution = new();//π‹¿Ì∆˜÷¥––À≥–Ú
+        //[SerializeField]
+        //AudioClip clip;
         Action _UpDate;
         Action _FixedUpDate;
         Action _LateUpDate;
@@ -22,8 +22,7 @@ namespace Qf.Managers {
             {
                 manager.Init();
             }
-
-            this.SendCommand(new SetAudioEditAudioCommand(audioClip));//≤‚ ‘º”‘ÿ±‡º≠∆˜“Ù∆µ
+            //this.SendCommand(new SetAudioEditAudioCommand(clip));
         }
         void Update() => _UpDate?.Invoke();
 

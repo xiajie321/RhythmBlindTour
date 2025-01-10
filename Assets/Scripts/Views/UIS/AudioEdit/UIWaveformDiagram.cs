@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.AI;
 using UnityEngine.UI;
+using Qf.Events;
 
 public class UIWaveformDiagram : MonoBehaviour, IController
 {
@@ -71,7 +72,7 @@ public class UIWaveformDiagram : MonoBehaviour, IController
     }
     void Start()
     {
-        Init();
+        this.RegisterEvent<AudioEditChangeEvent>(v => Init());
     }
     void Update()
     {

@@ -17,6 +17,7 @@ public class UITimeHand : MonoBehaviour, IController, IPointerClickHandler
     TMP_Text[] ShowTimes;
     [SerializeField]
     ScrollRect ScrollRect;
+
     public Vector2 TimeHandPos
     {
         get

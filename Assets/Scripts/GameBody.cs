@@ -9,8 +9,14 @@ public class GameBody : Architecture<GameBody>
     {
         //在这里对数据以及系统进行注册
         Debug.Log("[GameBody] 初始化加载中...");
+        Utilities();
         Models();
         Systems();
+    }
+
+    void Utilities()
+    {
+        this.RegisterUtility(new FileLoader());
     }
     void Models()
     {

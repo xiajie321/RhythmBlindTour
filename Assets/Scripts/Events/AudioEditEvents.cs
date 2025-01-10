@@ -1,3 +1,4 @@
+using UnityEngine;
 namespace Qf.Events
 {
     /// <summary>
@@ -32,4 +33,15 @@ namespace Qf.Events
     /// 更新鼓点UI
     /// </summary>
     public struct OnUpdateAudioEditDrumsUI { };
+    /// <summary>
+    /// 编辑器时间更新通知,具体时间从model中获得
+    /// </summary>
+    public struct AudioEditTimeChangeEvent { };
+    /// <summary>
+    /// 编辑器音频文件更新通知
+    /// </summary>
+    public struct AudioEditChangeEvent
+    {
+        public AudioClip clip;
+    }
 }

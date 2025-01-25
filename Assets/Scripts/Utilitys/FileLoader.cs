@@ -1,23 +1,15 @@
-using System.Windows.Forms;
 using QFramework;
 using UnityEngine;
 using UnityEngine.Networking;
+using SFB;
 
 public class FileLoader : IUtility
 {
     public static string OpenFolderPanel()
     {
-        var openFileDialog = new OpenFileDialog
-        {
-            Filter = "Audio Files|*.wav;*.mp3;*.ogg",
-            Title = "Select an audio file"
-        };
-
-        if (openFileDialog.ShowDialog() == DialogResult.OK)
-        {
-            return openFileDialog.FileName;
-        }
-        return null;
+        var extensions = new[] { new ExtensionFilter("Sound Files", "mp3", "wav", "ogg") };
+        var path = StandaloneFileBrowser.OpenFilePanel("Select an audio file", "", extensions, false);
+        return path[0];
     }
 
     public static AudioClip LoadAudioClip(string path)

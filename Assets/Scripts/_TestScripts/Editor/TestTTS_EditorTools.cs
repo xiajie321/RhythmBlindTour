@@ -30,6 +30,8 @@ public static class TestTTS_EditorTools
         "TestTTS_AudioBarReader",
         "TestTTS_AudioSliderReader",
         "TestTTS_AudioInputReader",
+        "TestTTS_InputValueSpeaker",
+
 
         "TestTTS_ToolBarReader",
         "TestTTS_DropdownItemReader",

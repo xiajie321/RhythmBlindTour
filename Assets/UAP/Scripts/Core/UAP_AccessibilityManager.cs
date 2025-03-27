@@ -4814,8 +4814,9 @@ public class UAP_AccessibilityManager : MonoBehaviour
 	{
 		if (instance == null || !instance.m_DebugOutput)
 			return;
-
-		Debug.Log("[Accessibility] " + message);
+#if UNITY_EDITOR
+		//Debug.Log("[Accessibility] " + message);
+#endif 
 	}
 
 	//////////////////////////////////////////////////////////////////////////

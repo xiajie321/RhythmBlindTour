@@ -4,14 +4,12 @@ using UnityEngine.UI;
 using TMPro;
 using QFramework;
 
-public class TestTTS_UINameSpeaker : TestTTS_NameSpeakerBase // IDeselectHandler
+public class TestTTS_InputValueSpeaker : TestTTS_ValueSpeakerBase
 {
-    private bool hasRead = false;
-
     #region ------ 初始化 ------
     private void Start()
     {
-        CacheTextComponents();
+        CacheInputFields();
     }
     #endregion
 
@@ -21,15 +19,9 @@ public class TestTTS_UINameSpeaker : TestTTS_NameSpeakerBase // IDeselectHandler
         if (!EnableOnSelected)
             return;
 
-        //if (hasRead)
-        //    return;
-        //hasRead = true;
-
         switch (TestTTS_StaticActionUAP.CurrentReadMode)
         {
             case TestTTS_StaticActionUAP.ReadModeType.MP3:
-                HandleMP3Mode();
-                break;
             case TestTTS_StaticActionUAP.ReadModeType.UAP:
                 HandleUAPMode();
                 break;
@@ -38,46 +30,17 @@ public class TestTTS_UINameSpeaker : TestTTS_NameSpeakerBase // IDeselectHandler
         }
     }
 
-    public void _ReadUIName()
+    public void _ReadInputValue()
     {
-        //if (hasRead)
-        //    return;
-        //hasRead = true;
-
         switch (TestTTS_StaticActionUAP.CurrentReadMode)
         {
             case TestTTS_StaticActionUAP.ReadModeType.MP3:
-                HandleMP3Mode();
-                break;
             case TestTTS_StaticActionUAP.ReadModeType.UAP:
                 HandleUAPMode();
                 break;
             case TestTTS_StaticActionUAP.ReadModeType.None:
                 return;
         }
-    }
-
-    //public void OnDeselect(BaseEventData eventData)
-    //{
-    //    hasRead = false;
-    //}
-    #endregion
-
-    #region ------ MP3模式处理 ------
-    private void HandleMP3Mode()
-    {
-        if (AudioClipToSpeak == null)
-        {
-            string baseText = GetBaseText();
-            if (!string.IsNullOrEmpty(baseText))
-            {
-                AudioClip clip = TestTTS_StaticActionUAP.TryLoadAudioClip(baseText, AudioClipNewPath);
-                if (clip != null)
-                    AudioClipToSpeak = clip;
-            }
-        }
-        if (AudioClipToSpeak != null)
-            TestTTS_StaticActionUAP.PlayAudioClip(AudioClipToSpeak);
     }
     #endregion
 
@@ -87,7 +50,13 @@ public class TestTTS_UINameSpeaker : TestTTS_NameSpeakerBase // IDeselectHandler
         string baseText = GetBaseText();
         if (string.IsNullOrEmpty(baseText))
             return;
-        string finalText = ConstructFinalText(baseText, ReadPrefix, ReadSuffix);
+
+        string finalText = "";
+        if (ReadTarget == TestTTS_ValueReadMode.Text)
+            finalText = ConstructFinalValue(baseText, ReadPrefix, ReadSuffix);
+        else if (ReadTarget == TestTTS_ValueReadMode.Custom)
+            finalText = baseText;
+
         finalText.UAPSpeak();
     }
     #endregion

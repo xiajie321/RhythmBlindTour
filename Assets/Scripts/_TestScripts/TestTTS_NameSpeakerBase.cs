@@ -3,6 +3,8 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 using QFramework;
+using UnityEngine.Events;
+using System.Collections;
 
 public enum TestTTS_ReadMode
 {
@@ -44,14 +46,83 @@ public abstract class TestTTS_NameSpeakerBase : MonoBehaviour, ISelectHandler
     public string AudioClipNewPath;
     #endregion
 
+    #region ------ Control Options ------
+    [Tooltip("是否启用组件内 OnSelect 触发的朗读功能")]
+    public bool EnableOnSelected = true;
+    #endregion
+
+    #region ------ Delayed Callback Settings ------
+    [Header("Delayed Callback Settings")]
+    [Tooltip("是否启用延迟回调功能（朗读完成后自动触发回调）")]
+    public bool EnableDelayedCallback = false;
+    [Tooltip("朗读完成后到触发回调之间的间隔延迟（秒）")]
+    public float CallbackIntervalDelay = 0f;
+    [Tooltip("朗读完成后自动调用的 UnityEvent 回调")]
+    public UnityEvent OnDelayedCallback;
+    #endregion
+
     #region ------ Caching Fields (供派生类使用) ------
     protected TMP_Text _cachedTMPText;
     protected Text _cachedText;
     #endregion
 
-    #region ------ Control Options ------
-    [Tooltip("是否启用组件内 OnSelect 触发的朗读功能")]
-    public bool EnableOnSelected = true;
+    #region ------ Timer Management for Automatic Callback ------
+    private Coroutine delayedCallbackCoroutine;
+    /// <summary>
+    /// 启动自动延迟回调协程，等待朗读完成后自动调用 OnDelayedCallback
+    /// </summary>
+    protected void StartDelayedCallbackAutomatically()
+    {
+        if (!EnableDelayedCallback)
+            return;
+        // 防止重叠启动
+        if (delayedCallbackCoroutine != null)
+        {
+            StopCoroutine(delayedCallbackCoroutine);
+            delayedCallbackCoroutine = null;
+        }
+        // 根据当前朗读模式启动等待协程
+        TestTTS_StaticActionUAP.ReadModeType mode = TestTTS_StaticActionUAP.CurrentReadMode;
+        delayedCallbackCoroutine = StartCoroutine(WaitForReadingToFinish(mode));
+    }
+
+    private IEnumerator WaitForReadingToFinish(TestTTS_StaticActionUAP.ReadModeType mode)
+    {
+        if (mode == TestTTS_StaticActionUAP.ReadModeType.MP3)
+        {
+            // MP3模式：等待 AudioSource 播放结束
+            GameObject go = GameObject.Find("TTSAudioSpeaker");
+            if (go != null)
+            {
+                AudioSource audioSource = go.GetComponent<AudioSource>();
+                if (audioSource != null)
+                {
+                    yield return new WaitUntil(() => !audioSource.isPlaying);
+                }
+            }
+        }
+        else if (mode == TestTTS_StaticActionUAP.ReadModeType.UAP)
+        {
+            // UAP模式：先等待一帧以便状态更新，再等待UAP朗读结束
+            yield return null;
+            yield return new WaitUntil(() => !TestTTS_StaticActionUAP.isUAPSpeaking());
+        }
+        // 等待额外的间隔延迟
+        if (CallbackIntervalDelay > 0f)
+            yield return new WaitForSeconds(CallbackIntervalDelay);
+        OnDelayedCallback?.Invoke();
+        delayedCallbackCoroutine = null;
+    }
+
+    protected virtual void OnDisable()
+    {
+        // 在组件失效时停止协程，防止内存泄漏
+        if (delayedCallbackCoroutine != null)
+        {
+            StopCoroutine(delayedCallbackCoroutine);
+            delayedCallbackCoroutine = null;
+        }
+    }
     #endregion
 
     /// <summary>

@@ -223,14 +223,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   DefaultText: 
-  TargetTMPText: {fileID: 0}
+  TargetTMPText: {fileID: 1069751587}
   TargetUIText: {fileID: 0}
-  ReadTarget: 2
+  ReadTarget: 0
   ReadPrefix: 
   ReadSuffix: 
   AudioClipToSpeak: {fileID: 0}
-  AudioClipNewPath: 
+  AudioClipNewPath: /TestNumber
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &23312681
 GameObject:
   m_ObjectHideFlags: 0
@@ -1643,8 +1648,13 @@ MonoBehaviour:
   ReadPrefix: 
   ReadSuffix: 
   AudioClipToSpeak: {fileID: 0}
-  AudioClipNewPath: 
+  AudioClipNewPath: /TestNumber
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &107359806
 GameObject:
   m_ObjectHideFlags: 0
@@ -2443,8 +2453,8 @@ GameObject:
   - component: {fileID: 217246487}
   - component: {fileID: 217246486}
   - component: {fileID: 217246485}
-  - component: {fileID: 217246488}
   - component: {fileID: 217246489}
+  - component: {fileID: 217246490}
   m_Layer: 5
   m_Name: "\u7F16\u8F91\u6A21\u5F0F"
   m_TagString: Untagged
@@ -2566,27 +2576,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 217246483}
   m_CullTransparentMesh: 1
---- !u!114 &217246488
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 217246483}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8fe9d1142d223e64aa2f0d4394b8c410, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  DefaultText: "\u7F16\u8F91\u6A21\u5F0F"
-  TargetTMPText: {fileID: 0}
-  TargetUIText: {fileID: 0}
-  ReadTarget: 1
-  ReadPrefix: "\u524D\u7F00\u6D4B\u8BD5"
-  ReadSuffix: "\u540E\u7F00\u6D4B\u8BD5"
-  AudioClipToSpeak: {fileID: 8300000, guid: c4b1cd763c59543418ac6ecb9d15313a, type: 3}
-  AudioClipNewPath: 
-  EnableOnSelected: 1
 --- !u!114 &217246489
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2616,6 +2605,32 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
+--- !u!114 &217246490
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 217246483}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8fe9d1142d223e64aa2f0d4394b8c410, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DefaultText: "\u7F16\u8F91\u6A21\u5F0F"
+  TargetTMPText: {fileID: 0}
+  TargetUIText: {fileID: 0}
+  ReadTarget: 1
+  ReadPrefix: "\u524D\u7F00\u6D4B\u8BD5"
+  ReadSuffix: "\u540E\u7F00\u6D4B\u8BD5"
+  AudioClipToSpeak: {fileID: 0}
+  AudioClipNewPath: 
+  EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &228052842
 GameObject:
   m_ObjectHideFlags: 0
@@ -5384,7 +5399,6 @@ GameObject:
   - component: {fileID: 356506084}
   - component: {fileID: 356506083}
   - component: {fileID: 356506086}
-  - component: {fileID: 356506087}
   m_Layer: 5
   m_Name: B
   m_TagString: Untagged
@@ -5523,35 +5537,45 @@ MonoBehaviour:
   m_GameObject: {fileID: 356506081}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8fe9d1142d223e64aa2f0d4394b8c410, type: 3}
+  m_Script: {fileID: 11500000, guid: cf92b27dd1e9d7147a199c920319d8fc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DefaultText: 
   TargetTMPText: {fileID: 0}
-  TargetUIText: {fileID: 0}
-  ReadTarget: 2
+  TargetText: {fileID: 0}
+  ReadTarget: 1
   ReadPrefix: 
-  ReadSuffix: "\u5206\u97F3\u7B26"
-  AudioClipToSpeak: {fileID: 0}
-  AudioClipNewPath: 
-  EnableOnSelected: 0
---- !u!114 &356506087
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 356506081}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Delegates:
-  - eventID: 9
-    callback:
-      m_PersistentCalls:
-        m_Calls: []
+  ReadSuffix: 
+  IV_AudioClipToSpeak: {fileID: 0}
+  IV_AudioClipNewPath: 
+  ValueArray:
+  - GroupName: 
+    Source: 1
+    TargetText: {fileID: 0}
+    TargetTextTMP: {fileID: 1668895430}
+    TargetSlider: {fileID: 0}
+    DefaultValue: 
+    Custom_AudioClip: {fileID: 8300000, guid: b8cb5ea61f5e24c4ba3f182e71bd6c33, type: 3}
+    Toggle: 1
+    Custom_AudioClipNewPath: /TestNumber
+  - GroupName: 
+    Source: 1
+    TargetText: {fileID: 0}
+    TargetTextTMP: {fileID: 1592244334}
+    TargetSlider: {fileID: 0}
+    DefaultValue: 
+    Custom_AudioClip: {fileID: 8300000, guid: b8cb5ea61f5e24c4ba3f182e71bd6c33, type: 3}
+    Toggle: 1
+    Custom_AudioClipNewPath: /TestNumber
+  - GroupName: 
+    Source: 3
+    TargetText: {fileID: 0}
+    TargetTextTMP: {fileID: 0}
+    TargetSlider: {fileID: 0}
+    DefaultValue: "\u62CD"
+    Custom_AudioClip: {fileID: 0}
+    Toggle: 0
+    Custom_AudioClipNewPath: /TestNumber
+  EnableOnSelected: 1
 --- !u!1 &357886672
 GameObject:
   m_ObjectHideFlags: 0
@@ -6427,6 +6451,11 @@ MonoBehaviour:
   AudioClipToSpeak: {fileID: 0}
   AudioClipNewPath: 
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &418005221
 GameObject:
   m_ObjectHideFlags: 0
@@ -9167,6 +9196,11 @@ MonoBehaviour:
   AudioClipToSpeak: {fileID: 0}
   AudioClipNewPath: 
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &593061737
 GameObject:
   m_ObjectHideFlags: 0
@@ -11308,6 +11342,11 @@ MonoBehaviour:
   AudioClipToSpeak: {fileID: 0}
   AudioClipNewPath: /TestNew
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &716503639
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11999,6 +12038,11 @@ MonoBehaviour:
   AudioClipToSpeak: {fileID: 8300000, guid: c6576ce04a7f824438c67d5348ccf683, type: 3}
   AudioClipNewPath: 
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &753733986
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18692,6 +18736,11 @@ MonoBehaviour:
   AudioClipToSpeak: {fileID: 0}
   AudioClipNewPath: 
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1173133360
 GameObject:
   m_ObjectHideFlags: 0
@@ -20025,6 +20074,7 @@ GameObject:
   - component: {fileID: 1296541272}
   - component: {fileID: 1296541271}
   - component: {fileID: 1296541270}
+  - component: {fileID: 1296541273}
   m_Layer: 5
   m_Name: A
   m_TagString: Untagged
@@ -20118,19 +20168,7 @@ MonoBehaviour:
       m_Image: {fileID: 0}
   m_OnValueChanged:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1372324235}
-        m_TargetAssemblyTypeName: TestTTS_InputValueSpeaker, Assembly-CSharp
-        m_MethodName: _ReadInputValue
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
   m_AlphaFadeSpeed: 0.15
 --- !u!114 &1296541271
 MonoBehaviour:
@@ -20170,6 +20208,45 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1296541268}
   m_CullTransparentMesh: 1
+--- !u!114 &1296541273
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1296541268}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf92b27dd1e9d7147a199c920319d8fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  TargetTMPText: {fileID: 0}
+  TargetText: {fileID: 0}
+  ReadTarget: 1
+  ReadPrefix: "\u62CD\u6570"
+  ReadSuffix: 
+  IV_AudioClipToSpeak: {fileID: 0}
+  IV_AudioClipNewPath: 
+  ValueArray:
+  - GroupName: 
+    Source: 3
+    TargetText: {fileID: 0}
+    TargetTextTMP: {fileID: 0}
+    TargetSlider: {fileID: 0}
+    DefaultValue: "\u62CD\u6570"
+    Custom_AudioClip: {fileID: 0}
+    Toggle: 1
+    Custom_AudioClipNewPath: /TestNumber
+  - GroupName: 
+    Source: 1
+    TargetText: {fileID: 0}
+    TargetTextTMP: {fileID: 1668895430}
+    TargetSlider: {fileID: 0}
+    DefaultValue: 
+    Custom_AudioClip: {fileID: 0}
+    Toggle: 1
+    Custom_AudioClipNewPath: /TestNumber
+  EnableOnSelected: 1
 --- !u!1 &1297570337
 GameObject:
   m_ObjectHideFlags: 0
@@ -21701,12 +21778,17 @@ MonoBehaviour:
   DefaultText: 
   TargetTMPText: {fileID: 0}
   TargetUIText: {fileID: 0}
-  ReadTarget: 0
+  ReadTarget: 2
   ReadPrefix: 
   ReadSuffix: 
   AudioClipToSpeak: {fileID: 0}
   AudioClipNewPath: 
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1360379673
 GameObject:
   m_ObjectHideFlags: 0
@@ -21925,7 +22007,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1372324234}
-  - component: {fileID: 1372324235}
   m_Layer: 5
   m_Name: "\u8282\u62CD"
   m_TagString: Untagged
@@ -21956,41 +22037,6 @@ RectTransform:
   m_AnchoredPosition: {x: 1436, y: 0.000011444092}
   m_SizeDelta: {x: 139.29993, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1372324235
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1372324233}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cf92b27dd1e9d7147a199c920319d8fc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  TargetTMPInputField: {fileID: 0}
-  TargetInputField: {fileID: 0}
-  ReadTarget: 1
-  ReadPrefix: 
-  ReadSuffix: 
-  ValueArray:
-  - GroupName: 'Part 0: None'
-    TargetTMPInput: {fileID: 0}
-    TargetInput: {fileID: 0}
-    DefaultValue: 
-  - GroupName: 'Part 1: UI Text (TMP)'
-    TargetTMPInput: {fileID: 1668895430}
-    TargetInput: {fileID: 0}
-    DefaultValue: 
-  - GroupName: 'Part 2: UI Text (TMP)'
-    TargetTMPInput: {fileID: 1592244334}
-    TargetInput: {fileID: 0}
-    DefaultValue: 
-  - GroupName: 'Part 3: Default Value'
-    TargetTMPInput: {fileID: 0}
-    TargetInput: {fileID: 0}
-    DefaultValue: "\u62CD"
-  EnableOnSelected: 0
 --- !u!1 &1376719936
 GameObject:
   m_ObjectHideFlags: 0
@@ -22073,7 +22119,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 261104908}
   m_HandleRect: {fileID: 261104907}
   m_Direction: 0
-  m_Value: 0.9999964
+  m_Value: 1.0000107
   m_Size: 0.99065936
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -25179,6 +25225,11 @@ MonoBehaviour:
   AudioClipToSpeak: {fileID: 0}
   AudioClipNewPath: 
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1526339953
 GameObject:
   m_ObjectHideFlags: 0
@@ -27364,7 +27415,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -918.49994, y: 0.0006218621}
+  m_AnchoredPosition: {x: -918.5002, y: 0.0006218621}
   m_SizeDelta: {x: 1820, y: 483}
   m_Pivot: {x: 0, y: 1}
 --- !u!1 &1695808571
@@ -27844,6 +27895,11 @@ MonoBehaviour:
   AudioClipToSpeak: {fileID: 0}
   AudioClipNewPath: 
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1735698716
 GameObject:
   m_ObjectHideFlags: 0
@@ -28054,6 +28110,11 @@ MonoBehaviour:
   AudioClipToSpeak: {fileID: 0}
   AudioClipNewPath: 
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1756409056
 GameObject:
   m_ObjectHideFlags: 0
@@ -28680,6 +28741,7 @@ GameObject:
   - component: {fileID: 1802727889}
   - component: {fileID: 1802727888}
   - component: {fileID: 1802727887}
+  - component: {fileID: 1802727890}
   m_Layer: 5
   m_Name: Input
   m_TagString: Untagged
@@ -28768,13 +28830,37 @@ MonoBehaviour:
   m_CharacterLimit: 0
   m_OnEndEdit:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1802727890}
+        m_TargetAssemblyTypeName: TestTTS_InputValueSpeaker, Assembly-CSharp
+        m_MethodName: _ReadInputValue
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   m_OnSubmit:
     m_PersistentCalls:
       m_Calls: []
   m_OnSelect:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1802727890}
+        m_TargetAssemblyTypeName: TestTTS_InputValueSpeaker, Assembly-CSharp
+        m_MethodName: _ReadInputValue
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   m_OnDeselect:
     m_PersistentCalls:
       m_Calls: []
@@ -28843,6 +28929,27 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1802727885}
   m_CullTransparentMesh: 1
+--- !u!114 &1802727890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1802727885}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf92b27dd1e9d7147a199c920319d8fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  TargetTMPText: {fileID: 1756409058}
+  TargetText: {fileID: 0}
+  ReadTarget: 0
+  ReadPrefix: "\u78A7\u8F9FM"
+  ReadSuffix: 
+  IV_AudioClipToSpeak: {fileID: 0}
+  IV_AudioClipNewPath: 
+  ValueArray: []
+  EnableOnSelected: 1
 --- !u!1 &1805490156
 GameObject:
   m_ObjectHideFlags: 0
@@ -29411,15 +29518,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8fe9d1142d223e64aa2f0d4394b8c410, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DefaultText: 
+  DefaultText: "\u5F55\u5236\u6A21\u5F0F"
   TargetTMPText: {fileID: 1674081182}
   TargetUIText: {fileID: 0}
-  ReadTarget: 0
+  ReadTarget: 1
   ReadPrefix: 
   ReadSuffix: 
   AudioClipToSpeak: {fileID: 8300000, guid: 93ab69f05e095754db156d5dd5259425, type: 3}
   AudioClipNewPath: 
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &1847819212
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -29588,6 +29700,11 @@ MonoBehaviour:
   AudioClipToSpeak: {fileID: 0}
   AudioClipNewPath: 
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1866058742
 GameObject:
   m_ObjectHideFlags: 0
@@ -29743,6 +29860,11 @@ MonoBehaviour:
   AudioClipToSpeak: {fileID: 0}
   AudioClipNewPath: 
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1876222870
 GameObject:
   m_ObjectHideFlags: 0
@@ -35635,6 +35757,11 @@ MonoBehaviour:
   AudioClipToSpeak: {fileID: 0}
   AudioClipNewPath: 
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &8120874284422049580
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -35821,6 +35948,11 @@ MonoBehaviour:
   AudioClipToSpeak: {fileID: 0}
   AudioClipNewPath: 
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &8590031103058498475
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -35973,6 +36105,11 @@ MonoBehaviour:
   AudioClipToSpeak: {fileID: 0}
   AudioClipNewPath: 
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &8902294404626389522
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -36083,6 +36220,11 @@ MonoBehaviour:
   AudioClipToSpeak: {fileID: 0}
   AudioClipNewPath: 
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &8935794274428373003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -36166,6 +36308,11 @@ MonoBehaviour:
   AudioClipToSpeak: {fileID: 0}
   AudioClipNewPath: 
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &9032681482054477529
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -36286,6 +36433,11 @@ MonoBehaviour:
   AudioClipToSpeak: {fileID: 0}
   AudioClipNewPath: 
   EnableOnSelected: 1
+  EnableDelayedCallback: 0
+  CallbackIntervalDelay: 0
+  OnDelayedCallback:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &9208505185531290687
 MonoBehaviour:
   m_ObjectHideFlags: 0

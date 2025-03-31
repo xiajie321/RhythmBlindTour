@@ -155,17 +155,17 @@ public static class TestTTS_StaticActionUAP
     */
     public static AudioClip TryLoadAudioClip(string baseText, string audioClipNewPath = "")
     {
-        if (string.IsNullOrEmpty(baseText))
-        {
-            return null;
-        }
         // 基础路径
         string path = "Audios/_TTSAudios";
         if (!string.IsNullOrEmpty(audioClipNewPath))
         {
             path += audioClipNewPath;
         }
-        path += "/" + baseText;
+        if (!string.IsNullOrEmpty(baseText))
+        {
+            path += "/" + baseText;
+        }
+       
         AudioClip clip = Resources.Load<AudioClip>(path);
         if (clip == null)
         {

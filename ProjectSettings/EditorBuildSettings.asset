@@ -6,9 +6,14 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/UAPTest.unity
-    guid: 3784c3d5ca92f7a42acf7e1742e85dd4
+    path: Assets/Scenes/_TestScenes/TestSelect_Main_0401.unity
+    guid: 88567977521cafb47bdd59ce04131484
   - enabled: 1
     path: Assets/Scenes/TestScene.unity
     guid: 48ae31a15bbd16747a6f16b5305492b3
-  m_configObjects: {}
+  - enabled: 0
+    path: Assets/Scenes/UAPTest.unity
+    guid: 3784c3d5ca92f7a42acf7e1742e85dd4
+  m_configObjects:
+    com.unity.addressableassets: {fileID: 11400000, guid: 7ac887927a1edaa49b856cf4b5a4a9e0, type: 2}
+    com.unity.localization.settings: {fileID: 11400000, guid: 98c3c86e45173c9488dc186a91d8be81, type: 2}

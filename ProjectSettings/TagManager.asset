@@ -11,13 +11,13 @@ TagManager:
   - 
   - Water
   - UI
+  - Tittle
   - 
   - 
   - 
+  - OverlayUI
   - 
-  - 
-  - 
-  - 
+  - DebugLogs
   - 
   - 
   - 
@@ -40,4 +40,16 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: UI
+    uniqueID: 433518165
+    locked: 0
+  - name: DebugLogs
+    uniqueID: 452916973
+    locked: 0
+  - name: OverLaySetPasue
+    uniqueID: 2506729471
+    locked: 0
+  - name: OverLaySetQuit
+    uniqueID: 3057074637
     locked: 0

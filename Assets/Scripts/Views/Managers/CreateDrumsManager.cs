@@ -8,78 +8,162 @@ using QFramework;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-/// <summary>
-/// ∏√¿‡ «”√”⁄π‹¿Ìπƒµ„ µÃÂµƒ(ø…Õ®π˝¡¥ Ω∑Ω∑®»•…Ë÷√πƒµ„ ˝æ›)
-/// </summary>
+
 public class CreateDrumsManager : ManagerBase
 {
-    [SerializeField]
-    AudioSource audioSource;
-    AudioEditModel editModel;
-    DataCachingModel cachingModel;
-    List<InputMode> gameObjects = new();
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private Transform inputModeParent;     // InputModePoint // Ê∑ªÂä†InputModeÁöÑ‚ÄúÊ∞¥Âπ≥ÁßªÂä®‚Äù -mixyao/06/19
+    [SerializeField] private Transform judgeLineTransform;  // TargetLine // Ê∑ªÂä†InputModeÁöÑ‚ÄúÊ∞¥Âπ≥ÁßªÂä®‚Äù -mixyao/06/19
+
+    private AudioEditModel editModel;
+    private DataCachingModel cachingModel;
+    private List<InputMode> gameObjects = new();
+    private HashSet<float> activeDrumCenters = new();
+
+    public IReadOnlyList<InputMode> ActiveInputModes => gameObjects;
+
     public override void Init()
     {
         editModel = this.GetModel<AudioEditModel>();
         cachingModel = this.GetModel<DataCachingModel>();
         CreateSetClass.Instance = new CreateSetClass(audioSource);
+
         this.RegisterEvent<OnUpdateThisTime>(v =>
         {
-            if (editModel.TipsAudio.ContainsKey(v.ThisTime))
+            // PlayMode ‰∏ãÊí≠ÊîæÈ¢ÑÂëäÈü≥ÂíåÁîüÊàêÈºìÁÇπ
+            if (editModel.Mode.Equals(SystemModeData.PlayMode))
             {
-                if (editModel.Mode.Equals(SystemModeData.PlayMode))
+                if (editModel.TipsAudio.ContainsKey(v.ThisTime))
+                {
                     AudioEditManager.Instance.Play(editModel.TipsAudio[v.ThisTime].ToArray(), editModel.TipsVolume[v.ThisTime].ToArray());
-            }
-            if (editModel.TimeLineData.ContainsKey(v.ThisTime))
-            {
-                foreach (var i in editModel.TimeLineData[v.ThisTime])
-                {
-                    gameObjects.Add(CreateDrums(i.DrwmsData.DtheTypeOfOperation, i).GetInputMode());
                 }
-            }
-            else if (!editModel.Mode.Equals(SystemModeData.PlayMode))//Bug:‘⁄«¯º‰µƒ ±∫Ú∑µªÿª·∂ÓÕ‚…˙≥…(≤ª”∞œÏ’˝≥£”ŒÕÊ ±µƒ–ßπ˚)
-            {
-                List<InputMode> ls = new();
-                foreach (var j in gameObjects)
+
+                if (editModel.TimeLineData != null)
                 {
-                    if (j != null)
+                    foreach (var kvp in editModel.TimeLineData)
                     {
-                        if (v.ThisTime > j.EndTime || v.ThisTime < j.StartTime)
+                        float centerTime = kvp.Key;
+
+                        foreach (var data in kvp.Value)
                         {
-                            ls.Add(j);
-                            Destroy(j.gameObject);
+                            float existence = data.DrwmsData.VTimeOfExistence;
+                            float preAdventOffset = data.DrwmsData.VPreAdventAudioClipOffsetTime;
+                            float preAdventTime = centerTime - preAdventOffset;
+
+                            if (v.ThisTime >= preAdventTime && !activeDrumCenters.Contains(centerTime))
+                            {
+                                var inputMode = CreateDrums(data.DrwmsData.DtheTypeOfOperation, data).GetInputMode();
+                                gameObjects.Add(inputMode);
+                                activeDrumCenters.Add(centerTime);
+                            }
                         }
                     }
                 }
-                foreach(var e in ls)
+            }
+
+            // ÈùûÊí≠ÊîæÊ®°ÂºèÔºöËØïÂê¨È¢ÑÂëäÈü≥Âíå‰∏ªÈü≥
+            else
+            {
+                if (editModel.TimeLineData != null)
+                {
+                    foreach (var kvp in editModel.TimeLineData)
+                    {
+                        float centerTime = kvp.Key;
+
+                        foreach (var data in kvp.Value)
+                        {
+                            float preAdventTime = centerTime - data.DrwmsData.VPreAdventAudioClipOffsetTime;
+
+                            if (Mathf.Approximately(v.ThisTime, preAdventTime))
+                            {
+                                var clip = cachingModel.GetAudioClip(data.DrwmsData.FPreAdventAudioClipPath);
+                                if (clip != null) audioSource.PlayOneShot(clip);
+                            }
+
+                            if (Mathf.Approximately(v.ThisTime, centerTime))
+                            {
+                                var clip = cachingModel.GetAudioClip(data.DrwmsData.FSucceedAudioClipPath);
+                                if (clip != null) audioSource.PlayOneShot(clip);
+                            }
+
+
+                        }
+                    }
+                }
+
+                // ÁºñËæëÊ®°ÂºèÈºìÁÇπÊ∏ÖÁêÜ
+                List<InputMode> toRemove = new();
+
+                foreach (var j in gameObjects)
+                {
+                    if (j != null && (v.ThisTime > j.EndTime || v.ThisTime < j.StartTime))
+                    {
+                        toRemove.Add(j);
+                        Destroy(j.gameObject);
+                        activeDrumCenters.Remove(j.DrwmsData.DrwmsData.CenterTime);
+                    }
+                }
+
+                foreach (var e in toRemove)
                 {
                     gameObjects.Remove(e);
                 }
             }
-            
 
         }).UnRegisterWhenGameObjectDestroyed(gameObject);
-        Debug.Log("CreateDrumsManager “—º”‘ÿ...");
+
+        Debug.Log("CreateDrumsManager initialized...");
     }
-    /// <summary>
-    /// ÃÌº”πƒµ„ µÃÂ
-    /// </summary>
-    /// <param name="operation"></param>
-    /// <param name="vector3"></param>
+
+    public void ResetAllActiveCenters()
+    {
+        activeDrumCenters.Clear();
+    }
+
     public CreateSetClass CreateDrums(TheTypeOfOperation operation, DrumsLoadData drumsLoadData = null)
     {
         GameObject gameObject = Instantiate(Resources.Load<GameObject>(PathConfig.ProfabsOath + "InputMode"));
+
+        if (inputModeParent != null)
+            gameObject.transform.SetParent(inputModeParent, worldPositionStays: false);
+
         InputMode mode = gameObject.GetComponent<InputMode>();
+
+        if (drumsLoadData != null && drumsLoadData.DrwmsData.CenterTime == 0f)
+        {
+            drumsLoadData.DrwmsData.CenterTime = this.GetModel<AudioEditModel>().ThisTime;
+        }
+
+        float centerTime = drumsLoadData.DrwmsData.CenterTime;
+        float existence = drumsLoadData.DrwmsData.VTimeOfExistence;
+        float preOffset = drumsLoadData.DrwmsData.VPreAdventAudioClipOffsetTime;
+
+        float startTime = centerTime - existence / 2f;
+        float endTime = centerTime + existence / 2f;
+        float preAdventTime = centerTime - preOffset;
+
+        mode.InitializeTimes(preAdventTime, startTime, endTime);
+        mode.SetIsDemoInputMode(Mathf.Approximately(existence, 0f));
         mode.DrwmsData = drumsLoadData;
+        mode.SetOperation(operation);
+
         mode.PreAdventClip = cachingModel.GetAudioClip(drumsLoadData.DrwmsData.FPreAdventAudioClipPath);
         mode.LoseClip = cachingModel.GetAudioClip(drumsLoadData.DrwmsData.FLoseAudioClipPath);
         mode.SuccessClip = cachingModel.GetAudioClip(drumsLoadData.DrwmsData.FSucceedAudioClipPath);
+
+        var visualController = gameObject.GetComponent<mInputModeVisualController>();
+        if (visualController != null && judgeLineTransform != null)
+        {
+            visualController.judgeLineTarget = judgeLineTransform;
+        }
+
         CreateSetClass.Instance.SetInputMode(mode);
-        mode.SetOperation(operation);
+
         this.SendEvent(new DrumsGenerate()
         {
             InputMode = mode
         });
+
         return CreateSetClass.Instance;
     }
 
@@ -87,11 +171,13 @@ public class CreateDrumsManager : ManagerBase
     {
         AudioSource _AudioSource;
         InputMode _Mode;
+
         public CreateSetClass() { }
         public CreateSetClass(AudioSource audioSource)
         {
             _AudioSource = audioSource;
         }
+
         static CreateSetClass instance;
         public static CreateSetClass Instance
         {
@@ -107,35 +193,30 @@ public class CreateDrumsManager : ManagerBase
                     instance = value;
             }
         }
-        /// <summary>
-        /// …Ë÷√±ª”∞œÏµƒInputMode
-        /// </summary>
-        /// <param name="inputMode"></param>
+
         public void SetInputMode(InputMode inputMode)
         {
             _Mode = inputMode;
         }
+
         public InputMode GetInputMode()
         {
             return _Mode;
         }
+
         public InputMode SetData(DrumsLoadData drumsLoadData)
         {
             _Mode.DrwmsData = drumsLoadData;
             return _Mode;
         }
-        /// <summary>
-        /// …Ë÷√¥•∑¢≥…π¶“Ù–ß(“Ù–ßº∞—”≥Ÿ ±º‰)
-        /// </summary>
+
         public void SetSuccessSounds(AudioClip Clip, float DelayTime, ChannelPosition channelPosition = ChannelPosition.FullChannel)
         {
             if (Clip != null)
                 _Mode.SuccessClip = Clip;
             SetCpVector(channelPosition);
         }
-        /// <summary>
-        /// …Ë÷√¿¥¡Ÿ«∞“Ù–ß(“Ù–ßº∞—”≥Ÿ ±º‰)
-        /// </summary>
+
         public void SetPreAdventSound(AudioClip Clip, float DelayTime, ChannelPosition channelPosition = ChannelPosition.FullChannel)
         {
             if (Clip != null)
@@ -143,35 +224,26 @@ public class CreateDrumsManager : ManagerBase
             _Mode.DrwmsData.DrwmsData.VPreAdventAudioClipOffsetTime = DelayTime;
             SetCpVector(channelPosition);
         }
-        /// <summary>
-        /// …Ë÷√ ß∞‹“Ù–ß(“Ù–ßº∞—”≥Ÿ ±º‰)
-        /// </summary>
+
         public void SetFailureSound(AudioClip Clip, float DelayTime, ChannelPosition channelPosition = ChannelPosition.FullChannel)
         {
             if (Clip != null)
                 _Mode.LoseClip = Clip;
             SetCpVector(channelPosition);
         }
+
         void SetCpVector(ChannelPosition channelPosition)
         {
             switch (channelPosition)
             {
-                case ChannelPosition.FullChannel:
-                    _AudioSource.panStereo = 0;
-                    break;
-                case ChannelPosition.LeftChannel:
-                    _AudioSource.panStereo = -1;
-                    break;
-                case ChannelPosition.RightChannel:
-                    _AudioSource.panStereo = 1;
-                    break;
-                default:
-                    break;
+                case ChannelPosition.FullChannel: _AudioSource.panStereo = 0; break;
+                case ChannelPosition.LeftChannel: _AudioSource.panStereo = -1; break;
+                case ChannelPosition.RightChannel: _AudioSource.panStereo = 1; break;
             }
         }
     }
 
-    public enum ChannelPosition //…˘µ¿Œª÷√
+    public enum ChannelPosition
     {
         LeftChannel,
         RightChannel,

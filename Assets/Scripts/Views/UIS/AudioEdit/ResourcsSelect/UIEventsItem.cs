@@ -10,55 +10,38 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class UIEventsItem : MonoBehaviour, IController, IPointerClickHandler
+public class UIEventsItem : MonoBehaviour,
+    IPointerClickHandler,
+    IPointerEnterHandler,
+    IPointerExitHandler,
+    IPointerDownHandler,
+    IPointerUpHandler
 {
-    [SerializeField]
-    TMP_Text _Name;
-    [SerializeField]
-    Image _Image;
-    [SerializeField]
-    UnityEvent clickeevent;
-    public void AddAction(UnityAction unityAction)
-    {
-        clickeevent.AddListener(unityAction);
-    }
-    public void SetName(string Name)
-    {
-        _Name.text = Name;
-    }
-    /// <summary>
-    /// …Ë÷√œ‘ æ∂‘œÛ
-    /// </summary>
-    /// <param name="Sprite"></param>
-    public void SetImage(Sprite Sprite)
-    {
-        _Image.sprite = Sprite;
-    }
-    public IArchitecture GetArchitecture()
-    {
-        return GameBody.Interface;
-    }
 
-    public void OnPointerClick(PointerEventData eventData)
+    [Header("ÂìçÂ∫îÊñπÂºè")]
+    public InputTriggerType TriggerType = InputTriggerType.Click;
+
+    [SerializeField] TMP_Text _Name;
+    [SerializeField] Image _Image;
+    [SerializeField] UnityEvent clickevent;
+
+    public void AddAction(UnityAction unityAction) => clickevent.AddListener(unityAction);
+
+    public void SetName(string Name) => _Name.text = Name;
+    public void SetImage(Sprite Sprite) => _Image.sprite = Sprite;
+
+    public void OnPointerClick(PointerEventData eventData) => TriggerClick();
+    public void OnPointerDown(PointerEventData eventData) { /* ÂèØÊãìÂ±ï */ }
+    public void OnPointerUp(PointerEventData eventData) { /* ÂèØÊãìÂ±ï */ }
+    public void OnPointerEnter(PointerEventData eventData) { }
+    public void OnPointerExit(PointerEventData eventData) { }
+
+    public void TriggerClick()
     {
-        transform.DOScale(new Vector3(1.1f, 1.1f, 1.1f), 0.1f).SetEase(Ease.Linear).OnComplete(() =>
+        transform.DOScale(Vector3.one * 1.1f, 0.1f).SetEase(Ease.Linear).OnComplete(() =>
         {
-            transform.DOScale(new Vector3(1, 1, 1), 0.1f).SetEase(Ease.Linear);
+            transform.DOScale(Vector3.one, 0.1f).SetEase(Ease.Linear);
         });
-        clickeevent?.Invoke();
-    }
-
-    void Start()
-    {
-        if (_Name != null)
-            _Name = transform.GetChild(0).GetComponent<TMP_Text>();
-        if (_Image != null)
-            _Image = transform.GetChild(1).GetComponent<Image>();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        clickevent?.Invoke();
     }
 }

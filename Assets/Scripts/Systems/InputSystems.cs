@@ -2,10 +2,12 @@ using QFramework;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using System.IO;
+
 namespace Qf.Systems
 {
     /// <summary>
-    /// ÊäÈëÏµÍ³(Í¨¹ıÍ³Ò»µÄ½Ó¿Ú»ñÈ¡ÊäÈë)
+    /// è¾“å…¥ç³»ç»Ÿï¼ˆé€šè¿‡ç»Ÿä¸€çš„æ¥å£è·å–è¾“å…¥ï¼‰
     /// </summary>
     public class InputSystems : AbstractSystem
     {
@@ -16,34 +18,48 @@ namespace Qf.Systems
         public static bool SwipeLeft { get; protected set; }
         public static bool SwipeRight { get; protected set; }
         public static bool Click { get; protected set; }
-        public static bool PlayClick { get; protected set; }//µã»÷»òÊ¹ÓÃÁË½»»¥°´¼ü
+        public static bool PlayClick { get; protected set; }
+
         public static float Horizontal { get; protected set; }
         public static float Vertical { get; protected set; }
-        static Dictionary<string, List<KeyCode>> keyValuePairs = new();//ÓÃÓÚÇĞ»»´¥·¢ÊÂ¼şµÄÎïÀí°´¼ü
+
+        static Dictionary<string, List<KeyCode>> keyValuePairs = new();
+
+        static Dictionary<string, bool> keyCacheThisFrame = new();
+        static Dictionary<string, bool> keyCacheLastFrame = new();
+
         protected override void OnInit()
         {
-            InputInit();
+            LoadInputMapFromJson(); // [ä» JSON æ–‡ä»¶åŠ è½½é”®ä½æ˜ å°„] -- mixyao/25/07/02
             Managers.Managers.instance.AddUpdate(() => Pc());
         }
-        void InputInit()
+
+        // [æ›¿ä»£ InputInitï¼šä» JSON æ–‡ä»¶åˆå§‹åŒ–æŒ‰é”®é…ç½®] -- mixyao/25/07/02
+        void LoadInputMapFromJson()
         {
-            AddKey("Quit", KeyCode.Escape);
-            AddKey("Sure", KeyCode.Space);
-            AddKey("SwipeUp", KeyCode.W);
-            AddKey("SwipeDown", KeyCode.S);
-            AddKey("SwipeLeft", KeyCode.A);
-            AddKey("SwipeRight", KeyCode.D);
-            AddKey("Click", KeyCode.Space);
-            List<KeyCode> ls = new();
-            ls .AddRange(GetKeys("SwipeUp"));
-            ls.AddRange(GetKeys("SwipeDown"));
-            ls.AddRange(GetKeys("SwipeLeft"));
-            ls.AddRange(GetKeys("SwipeRight"));
-            ls.AddRange(GetKeys("Click"));
-            AddKey("PlayClick", ls.ToArray());
+            string path = Path.Combine(Application.persistentDataPath, "KeyMap/inputMap.json");
+            if (!File.Exists(path))
+            {
+                Debug.LogWarning("æœªæ‰¾åˆ°æŒ‰é”®é…ç½®ï¼Œä½¿ç”¨é»˜è®¤é…ç½®");
+                return;
+            }
+
+            var json = File.ReadAllText(path);
+            var map = JsonUtility.FromJson<InputKeyMap>(json);
+
+            foreach (var kv in map.KeyBindings)
+            {
+                var keyCodes = kv.Value.ConvertAll(i => (KeyCode)i);
+                ClearKey(kv.Key);
+                AddKey(kv.Key, keyCodes.ToArray());
+            }
         }
+
         void Pc()
         {
+            keyCacheLastFrame = new Dictionary<string, bool>(keyCacheThisFrame);
+            keyCacheThisFrame.Clear();
+
             Quit = InputQuery("Quit");
             Sure = InputQuery("Sure");
             SwipeUp = InputQuery("SwipeUp");
@@ -51,106 +67,127 @@ namespace Qf.Systems
             SwipeLeft = InputQuery("SwipeLeft");
             SwipeRight = InputQuery("SwipeRight");
             Click = InputQuery("Click");
+            PlayClick = InputQuery("PlayClick");
+
             Horizontal = Input.GetAxis("Horizontal");
             Vertical = Input.GetAxis("Vertical");
-            PlayClick = InputQuery("PlayClick");
         }
-        /// <summary>
-        /// ¶à°´¼ü½â¾ö·½·¨
-        /// </summary>
-        /// <param name="keyName">²Ù×÷Ãû³Æ</param>
-        /// <param name="and">ÆôÓÃÓëÔËËã:ËùÓĞ°´¼üÍ¬Ê±´¥·¢²ÅÎªtrue</param>
-        /// <returns></returns>
-        bool InputQuery(string keyName,bool and = false)
+
+        public static bool InputQuery(string keyName, bool and = false)
         {
-            if (keyValuePairs[keyName].Count <= 1)//¼õÉÙ²éÕÒµ¼ÖÂµÄÏàÓ¦Ê±¼ä±äÂı·Ç±ØÒª²»ÒªÊ¹ÓÃ¶à°´¼ü
+            if (!keyValuePairs.ContainsKey(keyName)) return false;
+
+            if (keyCacheThisFrame.ContainsKey(keyName))
+                return keyCacheThisFrame[keyName];
+
+            bool result = false;
+
+            var keys = keyValuePairs[keyName];
+            if (keys == null || keys.Count == 0)
             {
-                if (Input.GetKeyDown(keyValuePairs[keyName][0])){
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
+                keyCacheThisFrame[keyName] = false;
+                return false;
+            }
+
+            if (keys.Count == 1)
+            {
+                result = Input.GetKeyDown(keys[0]);
             }
             else
             {
                 if (and)
                 {
-                    foreach (var key in keyValuePairs[keyName])
+                    result = keys.All(Input.GetKey);
+                }
+                else
+                {
+                    foreach (var key in keys)
                     {
-                        if (!Input.GetKey(key))
+                        if (Input.GetKeyDown(key))
                         {
-                            return false;
+                            result = true;
+                            break;
                         }
                     }
-                    return true;
-                }
-                foreach (var key in keyValuePairs[keyName])
-                {
-                    if (Input.GetKeyDown(key))
-                    {
-                        return true;
-                    }
                 }
             }
-            return false;
+
+            keyCacheThisFrame[keyName] = result;
+            return result;
         }
-        public static List<KeyCode> GetKeys(string KeyName)
+
+        public static bool WasPressedThisFrame(string keyName)
         {
-            if (keyValuePairs.ContainsKey(KeyName))
-            {
-                return keyValuePairs[KeyName];
-            }
+            return keyCacheThisFrame.ContainsKey(keyName) && keyCacheThisFrame[keyName];
+        }
+
+        public static bool WasPressedLastFrame(string keyName)
+        {
+            return keyCacheLastFrame.ContainsKey(keyName) && keyCacheLastFrame[keyName];
+        }
+
+        // [æ–°å¢ï¼šé•¿æŒ‰æ£€æµ‹] -- mixyao/25/07/02
+        public static bool IsKeyHeld(string keyName)
+        {
+            if (!keyValuePairs.ContainsKey(keyName)) return false;
+            return keyValuePairs[keyName].Any(Input.GetKey);
+        }
+
+        // [æ–°å¢ï¼šKeyUp æ£€æµ‹] -- mixyao/25/07/02
+        public static bool WasReleasedThisFrame(string keyName)
+        {
+            return keyCacheLastFrame.ContainsKey(keyName) && keyCacheLastFrame[keyName]
+                && (!keyCacheThisFrame.ContainsKey(keyName) || !keyCacheThisFrame[keyName]);
+        }
+
+        public static List<KeyCode> GetKeys(string keyName)
+        {
+            if (keyValuePairs.ContainsKey(keyName))
+                return keyValuePairs[keyName];
             return null;
         }
-        public static void AddKey(string KeyName,params KeyCode[] keyCode)
+
+        // [æ–°å¢ï¼šè¿”å›æ‰€æœ‰æ³¨å†Œçš„æŒ‰é”®å] -- mixyao/25/07/02
+        public static IEnumerable<string> GetAllKeyNames()
         {
-            if (!keyValuePairs.ContainsKey(KeyName))
+            return keyValuePairs.Keys;
+        }
+
+        public static void AddKey(string keyName, params KeyCode[] keyCodes)
+        {
+            if (!keyValuePairs.ContainsKey(keyName))
             {
-                List<KeyCode> keys;
-                keys= keyCode.ToList();
-                keyValuePairs[KeyName] = keys;
+                keyValuePairs[keyName] = keyCodes.ToList();
             }
             else
             {
-                foreach(var i in keyCode)
+                foreach (var key in keyCodes)
                 {
-                    if (keyValuePairs[KeyName].Contains(i))
-                    {
-                        Debug.Log($"{i}¸Ã°´¼üÒÑ¾­´æÔÚ");
-                        continue;
-                    }
-                    keyValuePairs[KeyName].Add(i);
+                    if (!keyValuePairs[keyName].Contains(key))
+                        keyValuePairs[keyName].Add(key);
+                    else
+                        Debug.Log($"{key} è¯¥æŒ‰é”®å·²å­˜åœ¨");
                 }
-                
-            }
-        }
-        public static void RemoveKey(string KeyName, KeyCode keyCode)
-        {
-            if (!keyValuePairs.ContainsKey(KeyName))
-            {
-                Debug.LogError("²»´æÔÚ¸Ã²Ù×÷ÇëÊ¹ÓÃAddKey·½·¨»òÆäËü·½·¨´´½¨");
-                return;
-            }
-            else
-            {
-                keyValuePairs[KeyName].Remove(keyCode);
-            }
-        }
-        public static void ClearKey(string KeyName)
-        {
-            if (!keyValuePairs.ContainsKey(KeyName))
-            {
-                Debug.LogError("²»´æÔÚ¸Ã²Ù×÷ÇëÊ¹ÓÃAddKey·½·¨»òÆäËü·½·¨´´½¨");
-                return;
-            }
-            else
-            {
-                keyValuePairs[KeyName].Clear();
             }
         }
 
+        public static void RemoveKey(string keyName, KeyCode keyCode)
+        {
+            if (!keyValuePairs.ContainsKey(keyName))
+            {
+                Debug.LogError("æ“ä½œä¸å­˜åœ¨ï¼Œè¯·å…ˆä½¿ç”¨ AddKey åˆ›å»º");
+                return;
+            }
+            keyValuePairs[keyName].Remove(keyCode);
+        }
+
+        public static void ClearKey(string keyName)
+        {
+            if (!keyValuePairs.ContainsKey(keyName))
+            {
+                return;
+            }
+            keyValuePairs[keyName].Clear();
+        }
     }
 }
-

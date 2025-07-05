@@ -16,12 +16,13 @@ public class SelectManager : ManagerBase
         this.RegisterEvent<SelectOptions>(v =>
         {
             if (CurrentAttribute == null) return;
-            if (CurrentAttribute.GetParameterType().Equals(ParameterType.File)){
-                //Debug.Log("Ö´ÐÐ");
+            if (CurrentAttribute.GetParameterType().Equals(ParameterType.File))
+            {
+                //Debug.Log("Ö´ï¿½ï¿½");
                 if (CurrentAttribute != null)
                     ((UIFileAttribute)CurrentAttribute).RunAction(v.SelectValue);
             }
-            
+
         }).UnRegisterWhenGameObjectDestroyed(gameObject);
     }
     public static void SetAttribute(UIAttributeBase uIAttributeBase)
@@ -30,9 +31,9 @@ public class SelectManager : ManagerBase
         CurrentAttribute = uIAttributeBase;
         if (LastAttribute != null)
         {
-            LastAttribute.transform.DOScale(new Vector3(1,1,1),0.1f).SetEase(Ease.Linear);
+            LastAttribute.transform.DOScale(new Vector3(1, 1, 1), 0.1f).SetEase(Ease.Linear);
         }
-        if(CurrentAttribute != null)
+        if (CurrentAttribute != null)
         {
             CurrentAttribute.transform.DOScale(new Vector3(1.1f, 1.1f, 1.1f), 0.1f).SetEase(Ease.Linear);
         }

@@ -8,8 +8,8 @@ public class GameBody : Architecture<GameBody>
 {
     protected override void Init()
     {
-        //在这里对数据以及系统进行注册
-        Debug.Log("[GameBody] 初始化加载中...");
+        //鍦ㄨ繖閲屽鏁版嵁浠ュ強绯荤粺杩涜娉ㄥ唽
+        Debug.Log("[GameBody] 鍒濆鍖栧姞杞戒腑...");
         Models();
         Systems();
         Utilitys();
@@ -18,18 +18,18 @@ public class GameBody : Architecture<GameBody>
     private void Utilitys()
     {
         RegisterUtility(new Storage());
-        Debug.Log("[GameBody] Utility加载完毕");
+        Debug.Log("[GameBody] Utility鍔犺浇瀹屾瘯");
     }
 
     void Models()
     {
         RegisterModel(new DataCachingModel());
         RegisterModel(new AudioEditModel());
-        Debug.Log("[GameBody] Model加载完毕");
+        Debug.Log("[GameBody] Model鍔犺浇瀹屾瘯");
     }
     void Systems()
     {
         RegisterSystem(new InputSystems());
-        Debug.Log("[GameBody] System加载完毕");
+        Debug.Log("[GameBody] System鍔犺浇瀹屾瘯");
     }
 }

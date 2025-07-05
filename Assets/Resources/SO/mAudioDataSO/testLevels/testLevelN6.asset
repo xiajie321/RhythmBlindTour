@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 63cbbebc3a6e941e885eeddcdd86dd74, type: 3}
+  m_Name: testLevelN6
+  m_EditorClassIdentifier: 
+  MainAudio: {fileID: 8300000, guid: 3d181027c1d5f4e35a64c44be8fe5e6a, type: 3}
+  FailAudio: {fileID: 8300000, guid: fe45312e5786445b0ace8d29ba2a65ce, type: 3}
+  SucceedUp: {fileID: 8300000, guid: d7b184b39ae9b4f44b060a443fd0fe79, type: 3}
+  SucceedDown: {fileID: 8300000, guid: e2418dec8be1f4daebb8f03a4ef042d5, type: 3}
+  SucceedLeft: {fileID: 8300000, guid: a0b2915522e3e4669911584b8b8d792e, type: 3}
+  SucceedRight: {fileID: 8300000, guid: 64fbadfeb4fed4bd089d3ea2be5b2a1f, type: 3}
+  SucceedClick: {fileID: 8300000, guid: d1d6a7f0669a44f15ae47e6fc67d9bd4, type: 3}
+  TipsUp: {fileID: 8300000, guid: d7b184b39ae9b4f44b060a443fd0fe79, type: 3}
+  TipsDown: {fileID: 8300000, guid: e2418dec8be1f4daebb8f03a4ef042d5, type: 3}
+  TipsLeft: {fileID: 8300000, guid: ab1654adec07e4944bf143734dc2c7b3, type: 3}
+  TipsRight: {fileID: 8300000, guid: 7a8678038b1db4c0cad49fa892989fc4, type: 3}
+  TipsClick: {fileID: 8300000, guid: 02f8f84e5b75a4b37a256855ba2867d0, type: 3}

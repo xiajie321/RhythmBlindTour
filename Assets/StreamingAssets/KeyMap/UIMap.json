@@ -1,0 +1,29 @@
+{
+    "entries": [
+        {
+            "groupName": "Drum_Up",
+            "keyCode": 105,
+            "triggerType": 0
+        },
+        {
+            "groupName": "Drum_Down",
+            "keyCode": 107,
+            "triggerType": 1
+        },
+        {
+            "groupName": "Drum_Left",
+            "keyCode": 106,
+            "triggerType": 1
+        },
+        {
+            "groupName": "Drum_Right",
+            "keyCode": 108,
+            "triggerType": 1
+        },
+        {
+            "groupName": "Drum_Click",
+            "keyCode": 111,
+            "triggerType": 1
+        }
+    ]
+}

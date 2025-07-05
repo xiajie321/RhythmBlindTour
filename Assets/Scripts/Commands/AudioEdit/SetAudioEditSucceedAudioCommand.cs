@@ -27,7 +27,7 @@ namespace Qf.Commands.AudioEdit
                     editModel.DownSucceedAudioClip = audioClip;
                     break;
                 case TheTypeOfOperation.SwipeRight:
-                    editModel.RigthSucceedAudioClip = audioClip;
+                    editModel.RightSucceedAudioClip = audioClip;
                     break;
                 case TheTypeOfOperation.SwipeLeft:
                     editModel.LeftSucceedAudioClip = audioClip;

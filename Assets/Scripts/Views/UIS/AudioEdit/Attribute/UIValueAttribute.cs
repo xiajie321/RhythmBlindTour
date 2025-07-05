@@ -13,14 +13,15 @@ public class UIValueAttribute : UIAttributeBase, IPointerClickHandler
     private void Start()
     {
         SetParameterType(ParameterType.Value);
-        inputField.onValueChanged.AddListener(v =>
+        inputField.onEndEdit.AddListener(v =>
         {
             RunAction(v);
         });
     }
+
     public void SetValueShow(string Value)
     {
-        if(inputField != null)
+        if (inputField != null)
             inputField.text = Value;
     }
     public void OnPointerClick(PointerEventData eventData)

@@ -4,174 +4,208 @@ using Qf.Managers;
 using Qf.Models.AudioEdit;
 using Qf.Systems;
 using QFramework;
-using Unity.VisualScripting;
 using UnityEngine;
+using System;
 
 public class InputMode : MonoBehaviour, IController
 {
-    [SerializeField]
-    TheTypeOfOperation Operation;
+    [SerializeField] TheTypeOfOperation Operation;
     AudioEditModel editModel;
-    DrumsLoadData drwmsData = new();//鼓点数据
-    public DrumsLoadData DrwmsData { get { return drwmsData; } set { drwmsData = value; } }
+
+    DrumsLoadData drwmsData = new();
+    public DrumsLoadData DrwmsData { get => drwmsData; set => drwmsData = value; }
+
     public float StartTime;
     public float EndTime;
-    [SerializeField]
-    float TimeOfExistence;//鼓点存在时间
-    [SerializeField]
-    AudioClip _PreAdventClip;//来临前播放的音频
-    public AudioClip PreAdventClip { get { return _PreAdventClip; } set { _PreAdventClip = value; } }
-    [SerializeField]
-    AudioClip _SucceedClip;//成功时的音频
-    public AudioClip SuccessClip { get { return _SucceedClip; } set { _SucceedClip = value; } }
-    [SerializeField]
-    AudioClip _LoseClip;//失败时的音频
-    public AudioClip LoseClip { get { return _LoseClip; } set { _LoseClip = value; } }
-    //[SerializeField]
-    //bool isPlay;//是否被点击(用于处理同时出现的情况目前来说用不着)
+    public float PreAdventTime;
+
+    [SerializeField] float TimeOfExistence;
+    [SerializeField] AudioClip _PreAdventClip;
+    [SerializeField] AudioClip _SucceedClip;
+    [SerializeField] AudioClip _LoseClip;
+
+    public AudioClip PreAdventClip { get => _PreAdventClip; set => _PreAdventClip = value; }
+    public AudioClip SuccessClip { get => _SucceedClip; set => _SucceedClip = value; }
+    public AudioClip LoseClip { get => _LoseClip; set => _LoseClip = value; }
+
     public SpriteRenderer SpriteRenderer;
+    public bool IsActive = true;
+    public bool HasJudged = false;
+
+    private float? realEnterTime = null;
+    private float Duration = 0f;
+    public bool PauseAutoFail = false;
+
+    private bool isAutoJudge = false;
+
+    [SerializeField]
+    public bool IsDemoInputMode { get; private set; } = false;
+
+    public void SetIsDemoInputMode(bool isDemo)
+    {
+        IsDemoInputMode = isDemo;
+    }
+
+    private static readonly System.Collections.Generic.Dictionary<TheTypeOfOperation, float> TypeYOffset = new()
+    {
+        { TheTypeOfOperation.Click, 1.5f },
+        { TheTypeOfOperation.SwipeUp, -0.75f },
+        { TheTypeOfOperation.SwipeDown, -1.5f },
+        { TheTypeOfOperation.SwipeLeft, 0.75f },
+        { TheTypeOfOperation.SwipeRight, 0f }
+    };
+
     private void OnEnable()
     {
         TimeOfExistence = 0;
+        mInputModeVisualController.OnPauseInputModeVisual += HandlePauseEvent;
     }
-    void Init()
+
+    private void OnDisable()
     {
-        editModel = this.GetModel<AudioEditModel>();
-        StartTime = editModel.ThisTime;
-        if (editModel.ThisTime + drwmsData.DrwmsData.VTimeOfExistence > editModel.EditAudioClip.length)
-        {
-            EndTime = editModel.ThisTime + ((editModel.ThisTime + drwmsData.DrwmsData.VTimeOfExistence) - editModel.EditAudioClip.length);
-            return;
-        }
-        EndTime = editModel.ThisTime + drwmsData.DrwmsData.VTimeOfExistence;
+        mInputModeVisualController.OnPauseInputModeVisual -= HandlePauseEvent;
     }
+
+    private void HandlePauseEvent(bool pause)
+    {
+        PauseAutoFail = pause;
+    }
+
     void Start()
     {
-        Init();
+        editModel = this.GetModel<AudioEditModel>();
+
+        float centerTime = drwmsData.DrwmsData.CenterTime;
+        float existence = drwmsData.DrwmsData.VTimeOfExistence;
+        float preOffset = drwmsData.DrwmsData.VPreAdventAudioClipOffsetTime;
+
+        StartTime = centerTime - existence / 2f;
+        EndTime = centerTime + existence / 2f;
+        PreAdventTime = centerTime - preOffset;
+
+        if (TypeYOffset.TryGetValue(Operation, out float offsetY))
+        {
+            Vector3 pos = transform.localPosition;
+            pos.y += offsetY;
+            transform.localPosition = pos;
+        }
+
+        if (PreAdventClip != null)
+        {
+            AudioEditManager.Instance.Play(
+                new AudioClip[] { PreAdventClip },
+                new float[] { drwmsData.MusicData.SPreAdventVolume });
+        }
+
+        if (Mathf.Approximately(EndTime, StartTime))
+        {
+            isAutoJudge = true;
+            return;
+        }
     }
+
     void Update()
     {
-        if (!editModel.Mode.Equals(SystemModeData.PlayMode)) return;
+        if (!editModel.Mode.Equals(SystemModeData.PlayMode) || HasJudged || PauseAutoFail)
+            return;
+
         TimeOfExistence += Time.deltaTime;
-        if (TimeOfExistence >= drwmsData.DrwmsData.VTimeOfExistence)
-            Lose();
-        InputRun();
-    }
-    void InputRun()
-    {
-        switch (Operation)
+        float now = editModel.ThisTime;
+
+        if (isAutoJudge)
         {
-            case TheTypeOfOperation.SwipeUp:
-                SwipeUp();
-                break;
-            case TheTypeOfOperation.SwipeDown:
-                SwipeDown();
-                break;
-            case TheTypeOfOperation.SwipeLeft:
-                SwipeLeft();
-                break;
-            case TheTypeOfOperation.SwipeRight:
-                SwipeRight();
-                break;
-            case TheTypeOfOperation.Click:
-                Click();
-                break;
-            default:
-                break;
-        }
-    }
-    void SwipeUp()
-    {
-        if (InputSystems.SwipeUp)
-        {
-            Debug.Log("上滑");
-            Succeed();
+            float centerTime = drwmsData.DrwmsData.CenterTime;
+            if (now >= centerTime)
+            {
+                SucceedByManager();
+                HasJudged = true;
+            }
             return;
         }
-        if (!InputSystems.PlayClick) return;
-        Lose();
-    }
-    void SwipeDown()
-    {
-        if (InputSystems.SwipeDown)
+
+        if (now > EndTime)
         {
-            Debug.Log("下滑");
-            Succeed();
-            return;
+            Duration = Time.realtimeSinceStartup - (realEnterTime ?? Time.realtimeSinceStartup);
+            LoseByManager();
+            HasJudged = true;
         }
-        if (!InputSystems.PlayClick) return;
-        Lose();
     }
-    void SwipeLeft()
+
+    public void InitializeTimes(float preAdventTime, float startTime, float endTime)
     {
-        if (InputSystems.SwipeLeft)
-        {
-            Debug.Log("左滑");
-            Succeed();
-            return;
-        }
-        if (!InputSystems.PlayClick) return;
-        Lose();
+        PreAdventTime = preAdventTime;
+        StartTime = startTime;
+        EndTime = endTime;
     }
-    void SwipeRight()
+
+    public bool ReceiveInput(TheTypeOfOperation inputType)
     {
-        if (InputSystems.SwipeRight)
+        if (!editModel.Mode.Equals(SystemModeData.PlayMode) || HasJudged)
+            return false;
+
+        if (Mathf.Approximately(StartTime, EndTime))
+            return false;
+
+        float now = editModel.ThisTime;
+
+        if (now < StartTime)
         {
-            Debug.Log("右滑");
-            Succeed();
-            return;
+            return false;
         }
-        if (!InputSystems.PlayClick) return;
-        Lose();
-    }
-    void Click()
-    {
-        if (InputSystems.Click)
+        else if (now >= StartTime && now <= EndTime)
         {
-            Debug.Log("点击");
-            Succeed();
-            return;
+            if (inputType == Operation)
+            {
+                SucceedByManager();
+                HasJudged = true;
+                return true;
+            }
+            else
+            {
+                LoseByManager();
+                HasJudged = true;
+                return false;
+            }
         }
-        if (!InputSystems.PlayClick) return;
-        Lose();
+
+        return false;
     }
-    void Succeed()
+
+    public void SucceedByManager()
     {
         if (!editModel.Mode.Equals(SystemModeData.PlayMode)) return;
-        AudioEditManager.Instance.Play(new AudioClip[] { _SucceedClip },new float[] { drwmsData.MusicData.SSucceedVolume });
+
+        AudioEditManager.Instance.Play(
+            new AudioClip[] { _SucceedClip },
+            new float[] { drwmsData.MusicData.SSucceedVolume });
+
         this.SendEvent<SucceedTrigger>();
         Destroy(gameObject);
     }
-    void Lose()
+
+    public void LoseByManager()
     {
         if (!editModel.Mode.Equals(SystemModeData.PlayMode)) return;
-        AudioEditManager.Instance.Play(new AudioClip[]{ _LoseClip}, new float[] { drwmsData.MusicData.SLoseVolume });
+
+        AudioEditManager.Instance.Play(
+            new AudioClip[] { _LoseClip },
+            new float[] { drwmsData.MusicData.SLoseVolume });
+
         this.SendEvent<LoseTrigger>();
         Destroy(gameObject);
     }
-    public void SetOperation(TheTypeOfOperation theTypeOfOperation)
-    {
-        Operation = theTypeOfOperation;
-    }
-    public TheTypeOfOperation GetOperation()
-    {
-        return Operation;
-    }
 
+    public void SetOperation(TheTypeOfOperation type) => Operation = type;
+    public TheTypeOfOperation GetOperation() => Operation;
 
-    public IArchitecture GetArchitecture()
-    {
-        return GameBody.Interface;
-    }
+    public IArchitecture GetArchitecture() => GameBody.Interface;
 }
-/// <summary>
-/// 交互操作
-/// </summary>
+
 public enum TheTypeOfOperation
 {
     SwipeUp,
     SwipeDown,
-    SwipeRight,
     SwipeLeft,
+    SwipeRight,
     Click
 }

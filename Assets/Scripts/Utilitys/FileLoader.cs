@@ -22,7 +22,7 @@ public class FileLoader : IUtility
     public static string SaveLevelFile()
     {
         var extensions = new[] { new ExtensionFilter("Sound Files", "Level") };
-        var path = StandaloneFileBrowser.SaveFilePanel("Select an Level file","","Level",extensions);
+        var path = StandaloneFileBrowser.SaveFilePanel("Select an Level file", "", "Level", extensions);
         if (path.Equals(""))
             return "";
         return path;

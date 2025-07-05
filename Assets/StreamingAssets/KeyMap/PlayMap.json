@@ -1,0 +1,23 @@
+{
+    "Quit": [
+        27
+    ],
+    "Sure": [
+        13
+    ],
+    "SwipeUp": [
+        273
+    ],
+    "SwipeDown": [
+        274
+    ],
+    "SwipeLeft": [
+        276
+    ],
+    "SwipeRight": [
+        275
+    ],
+    "Click": [
+        32
+    ]
+}

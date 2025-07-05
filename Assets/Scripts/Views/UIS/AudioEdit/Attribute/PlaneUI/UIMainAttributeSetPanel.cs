@@ -139,19 +139,19 @@ public class UIMainAttributeSetPanel : MonoBehaviour, IController
             int ls = index;
             i.SetAction(v =>
             {
-                
+
                 this.SendCommand(new SetAudioEditAudioComeTipsCommand((TheTypeOfOperation)ls, (AudioClip)v));
                 i.SetShowFileName(((AudioClip)v).name);
             });
             index++;
         }
         index = 0;
-        foreach(var i in SucceedAudios)
+        foreach (var i in SucceedAudios)
         {
             int ls = index;
             i.SetAction(v =>
             {
-                this.SendCommand(new SetAudioEditSucceedAudioCommand((TheTypeOfOperation)ls,(AudioClip)v));
+                this.SendCommand(new SetAudioEditSucceedAudioCommand((TheTypeOfOperation)ls, (AudioClip)v));
                 i.SetShowFileName(((AudioClip)v).name);
             });
             index++;
@@ -180,7 +180,7 @@ public class UIMainAttributeSetPanel : MonoBehaviour, IController
             index++;
         }
         index = 0;
-        foreach(var i in SucceedAudios)
+        foreach (var i in SucceedAudios)
         {
             i.SetShowFileName(this.SendQuery(new QueryAudioEditSucceedsAudio((TheTypeOfOperation)index))?.name);
             index++;
@@ -204,7 +204,7 @@ public class UIMainAttributeSetPanel : MonoBehaviour, IController
                 j.DrwmsData.VTimeOfExistence = editModel.TimeOfExistence.Value;
                 j.MusicData.SPreAdventVolume = editModel.PreAdventVolume.Value;
                 j.MusicData.SLoseVolume = editModel.LoseAudioVolume.Value;
-                j.MusicData.SSucceedVolume = editModel.LoseAudioVolume.Value;
+                j.MusicData.SSucceedVolume = editModel.SucceedAudioVolume.Value; // 修复 2025/06/06 - mixyao
             }
         }
         this.SendEvent<OnUpdateAudioEditDrumsUI>();

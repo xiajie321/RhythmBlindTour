@@ -11,13 +11,13 @@ namespace Qf.Models
 {
     public class DataCachingModel : AbstractModel
     {
-        public Dictionary<string,AudioClip> ResourceAudioDatas = new();
+        public Dictionary<string, AudioClip> ResourceAudioDatas = new();
         protected override void OnInit()
         {
-            ResourceAudioDatas = GetResourceAudioClipData().ToDictionary(key=>key.name,value=>value);
+            ResourceAudioDatas = GetResourceAudioClipData().ToDictionary(key => key.name, value => value);
         }
         public List<AudioClip> GetListAudioClips() => ResourceAudioDatas.Values.ToList();
-      
+
         List<AudioClip> GetResourceAudioClipData()
         {
             List<AudioClip> AllAudio = new();

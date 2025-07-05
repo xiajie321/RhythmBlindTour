@@ -17,33 +17,39 @@ namespace Qf.Managers
     public class AudioEditManager : MonoBehaviour, IController
     {
         [SerializeField]
-        AudioSource audioSource;//ÒôÆµÔ´
+        AudioSource audioSource;//éŸ³é¢‘æº
         [SerializeField]
-        List<AudioSource> vfxSource;//ÒôĞ§ÒôÆµÔ´
+        List<AudioSource> vfxSource;//éŸ³æ•ˆéŸ³é¢‘æº
         [SerializeField]
-        RhythmPlayer rhythmPlayer;//ÒôÆµ´¦ÀíÆ÷
+        RhythmPlayer rhythmPlayer;//éŸ³é¢‘å¤„ç†å™¨
         [SerializeField]
-        RhythmAnalyzer rhythmAnalyzer;//ÒôÆµ·ÖÎöÆ÷
+        RhythmAnalyzer rhythmAnalyzer;//éŸ³é¢‘åˆ†æå™¨
         AudioEditModel editModel;
         int Mode;
         public static AudioEditManager Instance;
+        private CreateDrumsManager drumsManager;
+
+
+        // [æ›éœ² ControlRun çš„æ¿€æ´»çŠ¶æ€] --mixyao/25/07/02
+        public bool IsControlRunning => audioSource != null && audioSource.isPlaying;
+
         /// <summary>
-        /// ²¥·ÅÌØĞ§Òô
+        /// æ’­æ”¾ç‰¹æ•ˆéŸ³
         /// </summary>
         /// <param name="audioClip"></param>
         int index;
-        public void Play(AudioClip[] audioClip,float[] volume =null)
+        public void Play(AudioClip[] audioClip, float[] volume = null)
         {
             int startindex = index;
-            for(int i= 0;i< audioClip.Length;i++)
+            for (int i = 0; i < audioClip.Length; i++)
             {
-                if (i >= volume.Length) 
+                if (i >= volume.Length)
                     vfxSource[startindex].volume = 1;
                 else
                 {
                     vfxSource[startindex].volume = volume[i];
                 }
-                    
+
                 startindex++;
                 if (startindex >= vfxSource.Count)
                     startindex = 0;
@@ -74,7 +80,7 @@ namespace Qf.Managers
             if (audioClip.length >= 3)
             {
                 await Task.Delay(3000);
-                if(vfxSource[0].clip == audioClip)
+                if (vfxSource[0].clip == audioClip)
                 {
                     vfxSource[0].Pause();
                 }
@@ -87,6 +93,7 @@ namespace Qf.Managers
         void Start()
         {
             Init();
+            drumsManager = FindObjectOfType<CreateDrumsManager>();
             this.RegisterEvent<MainAudioChangeValue>(v =>
             {
                 UpdateData();
@@ -113,15 +120,15 @@ namespace Qf.Managers
             isRunGetBPM = true;
             if (rhythmPlayer.rhythmData == null)
             {
-                Debug.Log("[AudioEditManager] ÎŞ·ÖÎö¶ÔÏó");
+                Debug.Log("[AudioEditManager] æ— åˆ†æå¯¹è±¡");
                 return;
             }
-            Debug.Log("[AudioEditManager] µÈ´ı·ÖÎö");
+            Debug.Log("[AudioEditManager] ç­‰å¾…åˆ†æ");
             await Task.Delay(3000);
             isRunGetBPM = false;
             if (rhythmPlayer.rhythmData == null)
             {
-                Debug.Log("[AudioEditManager] ÎŞ·ÖÎö¶ÔÏó");
+                Debug.Log("[AudioEditManager] æ— åˆ†æå¯¹è±¡");
                 return;
             }
             Track<Beat> ls = rhythmPlayer.rhythmData.GetTrack<Beat>();
@@ -131,7 +138,7 @@ namespace Qf.Managers
                 sum += ls[i].bpm;
             }
             sum /= ls.count;
-            Debug.Log($"Êı¾İ×é{ls.count},{sum}");
+            Debug.Log($"æ•°æ®ç»„{ls.count},{sum}");
             this.SendCommand(new SetAudioEditAudioBPMCommand((int)Mathf.Round(sum)));
             return;
         }
@@ -144,31 +151,31 @@ namespace Qf.Managers
             }
             this.RegisterEvent<OnEditMode>(v =>
             {
-                Debug.Log("±à¼­Ä£Ê½");
+                Debug.Log("åˆ‡æ¢è‡³-->ç¼–è¾‘æ¨¡å¼");
                 Mode = 0;
             }).UnRegisterWhenGameObjectDestroyed(gameObject);
             this.RegisterEvent<OnPlayMode>(v =>
             {
-                Debug.Log("ÓÎÍæÄ£Ê½");
+                Debug.Log("åˆ‡æ¢è‡³-->æ¸¸ç©æ¨¡å¼");
                 Mode = 1;
                 PlayMode();
             }).UnRegisterWhenGameObjectDestroyed(gameObject);
 
             this.RegisterEvent<OnRecordingMode>(v =>
             {
-                Debug.Log("Â¼ÖÆÄ£Ê½");
+                Debug.Log("åˆ‡æ¢è‡³-->å½•åˆ¶æ¨¡å¼");
                 Mode = 2;
             }).UnRegisterWhenGameObjectDestroyed(gameObject);
 
             this.RegisterEvent<ExitPlayMode>(v =>
             {
-                Debug.Log("ÍË³öÓÎÍæÄ£Ê½");
+                Debug.Log("é€€å‡ºæ¸¸ç©æ¨¡å¼");
                 ExitPlayMode();
             }).UnRegisterWhenGameObjectDestroyed(gameObject);
 
             this.RegisterEvent<ExitRecordingMode>(v =>
             {
-                Debug.Log("ÍË³öÂ¼ÖÆÄ£Ê½");
+                Debug.Log("é€€å‡ºå½•åˆ¶æ¨¡å¼");
                 ExitPlayMode();
             }).UnRegisterWhenGameObjectDestroyed(gameObject);
             this.RegisterEvent<OnUpdateThisTime>(v =>
@@ -207,18 +214,23 @@ namespace Qf.Managers
             audioSource.Pause();
         }
         /// <summary>
-        /// ¿ØÖÆÔËĞĞ,ÊÊÓÃÓÚ¿ª¹Ø
+        /// æ§åˆ¶è¿è¡Œ,é€‚ç”¨äºå¼€å…³
         /// </summary>
         public void ControlRun()
         {
             if (editModel.EditAudioClip == null) return;
+
             if (audioSource.isPlaying)
             {
                 ExitPlayMode();
+                mInputModeVisualController.BroadcastPauseToAll(true);  // äº‹ä»¶æ–¹å¼æš‚åœé¼“ç‚¹      //æš‚åœè‡ªåŠ¨å¤±è´¥çš„è®¡æ—¶ï¼Œä»¥åŠåœæ­¢é¼“ç‚¹çš„ç§»åŠ¨ - mixyao/06/23 
                 return;
             }
+
             PlayMode();
+            mInputModeVisualController.BroadcastPauseToAll(false);     // äº‹ä»¶æ–¹å¼æ¢å¤é¼“ç‚¹
         }
+
         void UpdateData()
         {
             audioSource.time = editModel.ThisTime;

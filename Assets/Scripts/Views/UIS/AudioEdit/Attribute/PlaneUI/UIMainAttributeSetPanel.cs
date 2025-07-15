@@ -4,15 +4,23 @@ using Qf.Commands.AudioEdit;
 using Qf.Events;
 using Qf.Models.AudioEdit;
 using QFramework;
-
+using TMPro;
 using UnityEngine;
 
 public class UIMainAttributeSetPanel : MonoBehaviour, IController
 {
+    //TODO:Z[暂时采用补丁的方案，在_Test2_中储存和读取 节拍 BPM]
+    // [SerializeField] TMP_Dropdown dropdownBeatA;
+    // [SerializeField] TMP_Dropdown dropdownBeatB;
+    // [SerializeField] TMP_InputField inputBPM;
+
     [SerializeField]
     UIFileAttribute MainAudio;//主音频
     [SerializeField]
     UIFileAttribute LoseAudio;//失败音频
+    [SerializeField]
+    UIFileAttribute DefaultAudio; // 默认音频
+
     [SerializeField]
     UIValueAttribute TipOffset;//偏移量
     [SerializeField]
@@ -23,6 +31,8 @@ public class UIMainAttributeSetPanel : MonoBehaviour, IController
     UISliderAttribute SucceedVolume;//成功音量大小
     [SerializeField]
     UISliderAttribute LoseVolume;//失败音量大小
+    [SerializeField]
+    UISliderAttribute DefaultVolume;//失败音量大小
     [SerializeField]
     UISliderAttribute PreAdventVolume;//提示音量大小
     [SerializeField]
@@ -75,6 +85,17 @@ public class UIMainAttributeSetPanel : MonoBehaviour, IController
             else
                 editModel.LoseAudioVolume.Value = ls;
         });
+        DefaultVolume.SetAction(v =>
+{
+    float ls = (float)v;
+    if (ls >= 1)
+        editModel.DefaultAudioVolume.Value = 1;
+    else if (ls <= 0)
+        editModel.DefaultAudioVolume.Value = 0;
+    else
+        editModel.DefaultAudioVolume.Value = ls;
+});
+
         PreAdventVolume.SetAction(v =>
         {
             float ls = (float)v;
@@ -95,6 +116,14 @@ public class UIMainAttributeSetPanel : MonoBehaviour, IController
             this.SendCommand(new SetAudioEditAudioLoseAudioCommand((AudioClip)v));
             LoseAudio.SetShowFileName(((AudioClip)v).name);
         });
+        DefaultAudio.SetAction(v =>
+        {
+            this.SendCommand(new SetAudioEditAudioDefaultAudioCommand((AudioClip)v));
+            DefaultAudio.SetShowFileName(((AudioClip)v).name);
+        });
+
+
+
         TipOffset.SetAction(v =>
         {
             if (!v.Equals(""))
@@ -129,6 +158,11 @@ public class UIMainAttributeSetPanel : MonoBehaviour, IController
         {
             LoseVolume.SetValueShow(v);
         }).UnRegisterWhenDisabled(gameObject);
+        editModel.DefaultAudioVolume.Register(v =>
+        {
+            DefaultVolume.SetValueShow(v);
+        }).UnRegisterWhenDisabled(gameObject);
+
         editModel.PreAdventVolume.Register(v =>
         {
             PreAdventVolume.SetValueShow(v);
@@ -161,18 +195,46 @@ public class UIMainAttributeSetPanel : MonoBehaviour, IController
             UpdateAll();
         }).UnRegisterWhenDisabled(gameObject);
 
+        // dropdownBeatA.ClearOptions();
+        // dropdownBeatB.ClearOptions();
+        // dropdownBeatA.AddOptions(new System.Collections.Generic.List<string> { "1", "2", "3", "4", "5", "6" });
+        // dropdownBeatB.AddOptions(new System.Collections.Generic.List<string> { "1", "2", "4", "8" });
+
+        // // 绑定 UI 变化事件
+        // dropdownBeatA.onValueChanged.AddListener(i =>
+        // {
+        //     editModel.BeatA = i + 1;
+        // });
+        // dropdownBeatB.onValueChanged.AddListener(i =>
+        // {
+        //     int[] options = { 1, 2, 4, 8 };
+        //     editModel.BeatB = options[i];
+        // });
+        // inputBPM.onValueChanged.AddListener(v =>
+        // {
+        //     if (int.TryParse(v, out int bpm)) editModel.BPM = bpm;
+        // });
     }
     /// <summary>
     /// 刷新显示名称
     /// </summary>
     void UpdateAll()
     {
+        // // 下拉框与输入框根据 editModel 当前值初始化
+        // dropdownBeatA.value = Mathf.Clamp(editModel.BeatA - 1, 0, dropdownBeatA.options.Count - 1);
+        // dropdownBeatB.value = System.Array.IndexOf(new int[] { 1, 2, 4, 8, 16 }, editModel.BeatB);
+        // inputBPM.text = editModel.BPM.ToString();
+
+
         MainAudioVolume.SetValueShow(editModel.EditAudioClipVolume.Value);
         LoseVolume.SetValueShow(editModel.LoseAudioVolume.Value);
+        DefaultVolume.SetValueShow(editModel.DefaultAudioVolume.Value);
         SucceedVolume.SetValueShow(editModel.SucceedAudioVolume.Value);
         PreAdventVolume.SetValueShow(editModel.PreAdventVolume.Value);
         MainAudio.SetShowFileName(editModel?.EditAudioClip?.name);
         LoseAudio.SetShowFileName(editModel?.LoseAudioClip?.name);
+        DefaultAudio.SetShowFileName(editModel?.DefaultAudioClip?.name);
+
         int index = 0;
         foreach (var i in InteractionEvents)
         {

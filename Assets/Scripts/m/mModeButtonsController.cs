@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using Qf.Events;
 using Qf.Managers;
 using QFramework;
+using System.Collections;
 
 public class mModeButtonsController : MonoBehaviour, IController
 {
@@ -16,8 +17,15 @@ public class mModeButtonsController : MonoBehaviour, IController
 
     void Start()
     {
-        SetSelectedMode(0); // 初始化时设置默认模式并更新视觉
+        StartCoroutine(DelayedSetSelectedMode());
     }
+
+    private IEnumerator DelayedSetSelectedMode()
+    {
+        yield return null; // 等待一帧
+        SetSelectedMode(0); // 延迟一帧后执行
+    }
+
 
     void Update()
     {
@@ -65,6 +73,8 @@ public class mModeButtonsController : MonoBehaviour, IController
         for (int i = 0; i < buttonImages.Length; i++)
         {
             buttonImages[i].color = (i == currentSelectedIndex) ? selectedColor : normalColor;
+            Debug.Log(buttonImages[i].color);
+
         }
     }
 

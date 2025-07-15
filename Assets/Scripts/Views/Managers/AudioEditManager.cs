@@ -17,7 +17,7 @@ namespace Qf.Managers
     public class AudioEditManager : MonoBehaviour, IController
     {
         [SerializeField]
-        AudioSource audioSource;//音频源
+        public AudioSource audioSource;//音频源
         [SerializeField]
         List<AudioSource> vfxSource;//音效音频源
         [SerializeField]
@@ -38,6 +38,30 @@ namespace Qf.Managers
         /// </summary>
         /// <param name="audioClip"></param>
         int index;
+        // 新增于public区域
+        public AudioSource GetVFXSource(TheTypeOfOperation op)
+        {
+            int idx = (int)op;
+            if (vfxSource != null && idx < vfxSource.Count)
+                return vfxSource[idx];
+            return vfxSource != null && vfxSource.Count > 0 ? vfxSource[0] : null;
+        }
+        public void PlayVFXWithFallback(TheTypeOfOperation op, AudioClip clip, float volume = 1f)
+        {
+            int idx = (int)op;
+            if (vfxSource == null || idx >= vfxSource.Count) return;
+
+            var primary = vfxSource[idx];
+
+            // 日志输出：类型、轨道号、音效名、播放器名
+            //Debug.Log($"[LOG] {GetOpName(op)}（index={idx}）鼓点分配到扬声器：{primary.name}，播放Clip={clip?.name}");
+
+            primary.volume = volume;
+            primary.clip = clip;
+            primary.Play();
+        }
+
+
         public void Play(AudioClip[] audioClip, float[] volume = null)
         {
             int startindex = index;
@@ -97,6 +121,8 @@ namespace Qf.Managers
             this.RegisterEvent<MainAudioChangeValue>(v =>
             {
                 UpdateData();
+
+                return;     // 将BPM数据于节拍设置打包并上传，以来“关卡文件设置”，有更加自由的难度把控，而非根据目标音频自动设置。
                 GetBPM();
             }).UnRegisterWhenGameObjectDestroyed(gameObject);
         }
@@ -197,12 +223,12 @@ namespace Qf.Managers
             if (ls >= 0.01f)
             {
                 ls = 0;
-                this.SendEvent(new OnUpdateThisTime()
-                {
-                    ThisTime = (float)(Math.Round(thisTime, 2, MidpointRounding.ToEven))
-                });
+                float eventTime = (float)(Math.Round(thisTime, 2, MidpointRounding.ToEven));
+                this.SendEvent(new OnUpdateThisTime() { ThisTime = eventTime });
+                Debug.Log($"[AudioSyncTest] OnUpdateThisTime sent: eventTime={eventTime:F2}");
             }
         }
+
         void PlayMode()
         {
             UpdateData();
@@ -237,18 +263,71 @@ namespace Qf.Managers
             audioSource.clip = editModel.EditAudioClip;
             rhythmPlayer.rhythmData = rhythmAnalyzer.Analyze(editModel.EditAudioClip);
         }
+        private float lastThisTime = 0f; // 在类内作为字段保存
+
+        private bool wasPlaying = false; // 仅在类内定义一次
         private void Update()
         {
+            if (!IsControlRunning)
+                return;
+            bool isNowPlaying = audioSource.isPlaying;
 
+            // 刚开始播放（从暂停→播放的瞬间）时，把 lastThisTime 对齐
+            if (isNowPlaying && !wasPlaying)
+            {
+                lastThisTime = audioSource.time;
+            }
+
+            float nowTime = audioSource.time;
+            float roundedLast = (float)Math.Round(lastThisTime, 2, MidpointRounding.ToEven);
+            float roundedNow = (float)Math.Round(nowTime, 2, MidpointRounding.ToEven);
+
+            // 【关键点】无论播放或SetTime，lastThisTime和audioSource.time不一致都立即补发一次事件
+            if (roundedNow != roundedLast)
+            {
+                float start = Math.Min(roundedLast, roundedNow);
+                float end = Math.Max(roundedLast, roundedNow);
+                float step = roundedNow > roundedLast ? 0.01f : -0.01f;
+
+                // 向前或向后都能同步
+                for (float t = start + step; (step > 0 ? t <= end : t >= end); t += step)
+                {
+                    float timePoint = (float)Math.Round(t, 2, MidpointRounding.ToEven);
+                    this.SendEvent(new OnUpdateThisTime() { ThisTime = timePoint });
+                }
+
+                lastThisTime = nowTime;
+            }
+
+            wasPlaying = isNowPlaying; // 更新历史状态
         }
-        private void FixedUpdate()
+
+
+        public void SetLastThisTime(float t)
         {
-            if (audioSource.isPlaying)
-                UpdateAll();
+            lastThisTime = t;
         }
+
+
+
+
         public IArchitecture GetArchitecture()
         {
             return GameBody.Interface;
         }
+
+        public static string GetOpName(TheTypeOfOperation op)
+        {
+            return op switch
+            {
+                TheTypeOfOperation.Click => "点击",
+                TheTypeOfOperation.SwipeUp => "上滑",
+                TheTypeOfOperation.SwipeDown => "下滑",
+                TheTypeOfOperation.SwipeLeft => "左滑",
+                TheTypeOfOperation.SwipeRight => "右滑",
+                _ => "未知"
+            };
+        }
+
     }
 }

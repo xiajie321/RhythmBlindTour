@@ -2,6 +2,7 @@ using Qf.Commands.AudioEdit;
 using Qf.Events;
 using Qf.Querys.AudioEdit;
 using QFramework;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -32,6 +33,8 @@ public class UIAudioEditTimeHand : MonoBehaviour, IController, IPointerClickHand
     }
     private void Start()
     {
+        //Application.targetFrameRate = 100; // 设为100帧
+
         this.RegisterEvent<OnUpdateThisTime>(v =>
         {
             TimeHand.anchoredPosition = new Vector2(v.ThisTime * _PixelUnitsPerSecond, 0);
@@ -44,6 +47,11 @@ public class UIAudioEditTimeHand : MonoBehaviour, IController, IPointerClickHand
     }
     private void OnEnable()
     {
+        StartCoroutine(DelayedSendThisTime());
+    }
+    private IEnumerator DelayedSendThisTime()
+    {
+        yield return null;
         this.SendEvent<OnUpdateThisTime>();
     }
     void UpdateThisTime()
@@ -136,11 +144,20 @@ public class UIAudioEditTimeHand : MonoBehaviour, IController, IPointerClickHand
         mode = 2;
         this.Speed = Speed;
     }
-    public void SetTime(float Time)
+    public void SetTime(float time)
     {
-        this.SendCommand(new SetAudioEditThisTimeCommand(Time));
-
+        this.SendCommand(new SetAudioEditThisTimeCommand(time));
+        var audioMgr = Qf.Managers.AudioEditManager.Instance;
+        if (audioMgr != null && audioMgr.audioSource != null)
+        {
+            audioMgr.audioSource.time = time;
+            // NEW: 无论是否播放，都同步lastThisTime（核心补丁）
+            audioMgr.SetLastThisTime(time);
+        }
+        QFramework.TypeEventSystem.Global.Send(new OnUpdateThisTime() { ThisTime = time });
     }
+
+
     public void SetZero()
     {
         int Time = 0;
@@ -158,13 +175,15 @@ public class UIAudioEditTimeHand : MonoBehaviour, IController, IPointerClickHand
 
     public void SetTime(float time, bool isFollow = false)
     {
-        this.SendCommand(new SetAudioEditThisTimeCommand(time));
+        // 强制两位小数
+        float fixedTime = (float)Math.Round(time, 2, MidpointRounding.ToEven);
+        this.SendCommand(new SetAudioEditThisTimeCommand(fixedTime));
 
         if (ScrollRect != null)
         {
             float scrollRange = this.SendQuery(new QueryAudioEditAudioClipLength());
 
-            if (Mathf.Approximately(time, 0))
+            if (Mathf.Approximately(fixedTime, 0))
             {
                 ScrollRect.horizontalScrollbar.value = 0f;
                 targetScrollValue = null;
@@ -173,13 +192,14 @@ public class UIAudioEditTimeHand : MonoBehaviour, IController, IPointerClickHand
             {
                 float viewWidth = ScrollRect.viewport.rect.width;
                 float contentWidth = ScrollRect.content.rect.width;
-                float centerPixel = time * _PixelUnitsPerSecond - viewWidth / 2f;
+                float centerPixel = fixedTime * _PixelUnitsPerSecond - viewWidth / 2f;
                 float scrollValue = Mathf.Clamp01(centerPixel / (contentWidth - viewWidth));
 
                 targetScrollValue = scrollValue; // 由 Update 插值到目标值
             }
         }
     }
+
 
 
     public void AddTime(float Speed)
@@ -201,7 +221,7 @@ public class UIAudioEditTimeHand : MonoBehaviour, IController, IPointerClickHand
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        FindObjectOfType<CreateDrumsManager>()?.ResetAllActiveCenters(); // 清空标记 局限在谱面编辑中可以重新设置InputMode //2025/06/10 - mixyao
+        FindObjectOfType<CreateDrumsManager>()?.ResetAllActiveCodes(); // 清空标记 局限在谱面编辑中可以重新设置InputMode //2025/06/10 - mixyao
         TimeHand.position = eventData.position;
         this.SendCommand(new SetAudioEditThisTimeCommand((TimeHand.anchoredPosition.x) / _PixelUnitsPerSecond));
     }
@@ -209,6 +229,25 @@ public class UIAudioEditTimeHand : MonoBehaviour, IController, IPointerClickHand
     {
         return GameBody.Interface;
     }
+
+    /// <summary>
+    /// 时间针前移0.01
+    /// </summary>
+    public void MoveForward_0_01()
+    {
+        float cur = this.SendQuery(new QueryAudioEditAudioClipThisTime());
+        SetTime(cur + 0.01f, isFollow: true);
+    }
+
+    /// <summary>
+    /// 时间针后移0.01
+    /// </summary>
+    public void MoveBackward_0_01()
+    {
+        float cur = this.SendQuery(new QueryAudioEditAudioClipThisTime());
+        SetTime(cur - 0.01f, isFollow: true);
+    }
+
 
 
 }

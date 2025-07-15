@@ -23,8 +23,9 @@ public class UIEventsItem : MonoBehaviour,
 
     [SerializeField] TMP_Text _Name;
     [SerializeField] Image _Image;
-    [SerializeField] UnityEvent clickevent;
+    [SerializeField] public UnityEvent clickevent;
 
+    [SerializeField] bool isClickOn = true;
     public void AddAction(UnityAction unityAction) => clickevent.AddListener(unityAction);
 
     public void SetName(string Name) => _Name.text = Name;
@@ -38,10 +39,22 @@ public class UIEventsItem : MonoBehaviour,
 
     public void TriggerClick()
     {
+        if (this.isClickOn == false) return;
         transform.DOScale(Vector3.one * 1.1f, 0.1f).SetEase(Ease.Linear).OnComplete(() =>
         {
             transform.DOScale(Vector3.one, 0.1f).SetEase(Ease.Linear);
         });
         clickevent?.Invoke();
+    }
+
+    //TODO[同按键切换功能] 配合UIEventSwitcher使用
+    public void SetClickOff()
+    {
+        if (this.isClickOn == true) this.isClickOn = !this.isClickOn;
+    }
+
+    public void SetClickOn()
+    {
+        if (this.isClickOn == false) this.isClickOn = !this.isClickOn;
     }
 }

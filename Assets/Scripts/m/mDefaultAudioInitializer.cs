@@ -35,7 +35,7 @@ public class mDefaultAudioInitializer : MonoBehaviour, IController
 
 
 
-    void Start()
+    public void DoDefaultAudioInit()
     {
         var model = this.GetModel<AudioEditModel>();
         model.BeatA = defaultBeatA;
@@ -77,6 +77,7 @@ public class mDefaultAudioInitializer : MonoBehaviour, IController
         {
             audioSet.MainAudio,          // 0
             audioSet.FailAudio,          // 1
+            audioSet.DefaultAudio,
             audioSet.SucceedUp,          // 2
             audioSet.SucceedDown,        // 3
             audioSet.SucceedLeft,        // 4
@@ -110,37 +111,42 @@ public class mDefaultAudioInitializer : MonoBehaviour, IController
                     this.SendCommand(new SetAudioEditAudioLoseAudioCommand(clip));
                     break;
                 case 2:
-                    this.SendCommand(new SetAudioEditSucceedAudioCommand(TheTypeOfOperation.SwipeUp, clip));
+                    // 修正：设置DefaultAudio
+                    this.SendCommand(new SetAudioEditAudioDefaultAudioCommand(clip));
                     break;
                 case 3:
-                    this.SendCommand(new SetAudioEditSucceedAudioCommand(TheTypeOfOperation.SwipeDown, clip));
+                    this.SendCommand(new SetAudioEditSucceedAudioCommand(TheTypeOfOperation.SwipeUp, clip));
                     break;
                 case 4:
-                    this.SendCommand(new SetAudioEditSucceedAudioCommand(TheTypeOfOperation.SwipeLeft, clip));
+                    this.SendCommand(new SetAudioEditSucceedAudioCommand(TheTypeOfOperation.SwipeDown, clip));
                     break;
                 case 5:
-                    this.SendCommand(new SetAudioEditSucceedAudioCommand(TheTypeOfOperation.SwipeRight, clip));
+                    this.SendCommand(new SetAudioEditSucceedAudioCommand(TheTypeOfOperation.SwipeLeft, clip));
                     break;
                 case 6:
-                    this.SendCommand(new SetAudioEditSucceedAudioCommand(TheTypeOfOperation.Click, clip));
+                    this.SendCommand(new SetAudioEditSucceedAudioCommand(TheTypeOfOperation.SwipeRight, clip));
                     break;
                 case 7:
-                    model.UpTipsAudioClip = clip;
+                    this.SendCommand(new SetAudioEditSucceedAudioCommand(TheTypeOfOperation.Click, clip));
                     break;
                 case 8:
-                    model.DownTipsAudioClip = clip;
+                    model.UpTipsAudioClip = clip;
                     break;
                 case 9:
-                    model.LeftTipsAudioClip = clip;
+                    model.DownTipsAudioClip = clip;
                     break;
                 case 10:
-                    model.RightTipsAudioClip = clip;
+                    model.LeftTipsAudioClip = clip;
                     break;
                 case 11:
+                    model.RightTipsAudioClip = clip;
+                    break;
+                case 12:
                     model.ClickTipsAudioCLip = clip;
                     break;
             }
         }
+
     }
 
     IEnumerator DelayedBPMInit(int bpm)

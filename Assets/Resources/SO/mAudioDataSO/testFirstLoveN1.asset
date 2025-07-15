@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MainAudio: {fileID: 8300000, guid: 7e444445834d348f395695e1ea698a32, type: 3}
   FailAudio: {fileID: 8300000, guid: 1cca78cad59244d0784853d74ce9a2dc, type: 3}
+  DefaultAudio: {fileID: 8300000, guid: 2e17391523063344198a7d5bea324896, type: 3}
   SucceedUp: {fileID: 8300000, guid: d7b184b39ae9b4f44b060a443fd0fe79, type: 3}
   SucceedDown: {fileID: 8300000, guid: e2418dec8be1f4daebb8f03a4ef042d5, type: 3}
   SucceedLeft: {fileID: 8300000, guid: adc80dc28903641e088e54c628a07b8f, type: 3}

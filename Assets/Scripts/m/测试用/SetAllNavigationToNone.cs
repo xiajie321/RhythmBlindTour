@@ -4,9 +4,9 @@
 // using UnityEngine;
 // using UnityEditor;
 // using UnityEngine.UI;
-///
-/// 功能脚本 打包不可携带
-/// 
+// // /
+// // / 功能脚本 打包不可携带
+// // / 
 // public class SetAllNavigationToNone
 // {
 //     [MenuItem("Tools/输入/关闭所有Selectable导航")]

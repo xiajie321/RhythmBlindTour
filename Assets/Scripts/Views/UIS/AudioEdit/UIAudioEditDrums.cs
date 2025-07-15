@@ -1,6 +1,8 @@
 using Qf.ClassDatas.AudioEdit;
-using System.Collections;
-using System.Collections.Generic;
+using Qf.Managers;
+using Qf.Models;
+using Qf.Models.AudioEdit;
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -9,16 +11,18 @@ using static UIAudioEditDrumsOrbit;
 public class UIAudioEditDrums : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] Image image;
-
-    // [ºìÉ«Ìõ£ºÆğÊ¼Óë½áÊø] -- mixyao/25/07/04
     [SerializeField] Image startBarImage;
     [SerializeField] Image endBarImage;
+
+    [Header("åªå‘å£°é¼“ç‚¹ç”¨ç‰¹æ®ŠSprite")]
+    [SerializeField] private Sprite specialSprite;
 
     public float ThisTime;
     public int Index;
     public bool IsTip = false;
-
     private UIAudioEditTimeHand timeHand;
+    public string DrumCode;
+    public AudioSource PreviewAudioSource; // ç”±Orbitä¼ å…¥
 
     public void SetTimeHand(UIAudioEditTimeHand timeHandRef)
     {
@@ -33,12 +37,6 @@ public class UIAudioEditDrums : MonoBehaviour, IPointerClickHandler
     public void SetColor(Color color)
     {
         image.color = color;
-    }
-
-    public void ShowData()
-    {
-        if (timeHand != null)
-            timeHand.SetTime(this.ThisTime);
     }
 
     public void InitUI(
@@ -57,6 +55,12 @@ public class UIAudioEditDrums : MonoBehaviour, IPointerClickHandler
 
         var rect = GetComponent<RectTransform>();
 
+        float trackHeight = 0f;
+        if (rect.parent != null && rect.parent is RectTransform parentRect)
+            trackHeight = parentRect.rect.height;
+        else
+            trackHeight = rect.sizeDelta.y;
+
         if (isTip)
         {
             if (style.PreTipSprite) image.sprite = style.PreTipSprite;
@@ -70,44 +74,87 @@ public class UIAudioEditDrums : MonoBehaviour, IPointerClickHandler
 
             float tipWidth = tipOffset * pixelUnitsPerSecond;
             rect.sizeDelta = new Vector2(tipWidth, rect.sizeDelta.y);
-            rect.anchoredPosition = new Vector2(-tipWidth, 0); //  Ïò×óÆ«ÒÆ
+            rect.anchoredPosition = new Vector2(-tipWidth, 0);
 
             bool hasExistence = !Mathf.Approximately(existence, 0f);
-            float height = rect.sizeDelta.y;
 
             if (startBarImage != null)
             {
                 var barRect = startBarImage.rectTransform;
-                barRect.sizeDelta = new Vector2(barRect.sizeDelta.x, height);
-                barRect.anchoredPosition = new Vector2(-tipWidth * 0.5f, 0); // ×ó²àºìÏß x Æ«ÒÆ
+                barRect.sizeDelta = new Vector2(barRect.sizeDelta.x, trackHeight);
+                barRect.anchoredPosition = new Vector2(-tipWidth * 0.5f, 0);
                 startBarImage.gameObject.SetActive(hasExistence);
             }
 
             if (endBarImage != null)
             {
                 var barRect = endBarImage.rectTransform;
-                barRect.sizeDelta = new Vector2(barRect.sizeDelta.x, height);
-                barRect.anchoredPosition = new Vector2(+tipWidth * 0.5f, 0); // ÓÒ²àºìÏß x Æ«ÒÆ
-                endBarImage.gameObject.SetActive(hasExistence);
+                barRect.sizeDelta = new Vector2(barRect.sizeDelta.x, trackHeight);
+                barRect.anchoredPosition = Vector2.zero;
+                endBarImage.gameObject.SetActive(true);
             }
-
         }
         else
         {
-            if (style.DrumSprite) image.sprite = style.DrumSprite;
+            bool isOnlySoundDrum = Mathf.Approximately(tipOffset, 0f) && Mathf.Approximately(existence, 0f);
+
+            if (isOnlySoundDrum && specialSprite != null)
+            {
+                image.sprite = specialSprite;
+                rect.sizeDelta = new Vector2(18f, 18f);
+            }
+            else
+            {
+                if (style.DrumSprite) image.sprite = style.DrumSprite;
+                float drumWidth = existence * pixelUnitsPerSecond;
+                rect.sizeDelta = new Vector2(drumWidth, rect.sizeDelta.y);
+            }
             image.color = style.DrumColor;
             Index = index;
 
-            float drumWidth = existence * pixelUnitsPerSecond;
-            rect.sizeDelta = new Vector2(drumWidth, rect.sizeDelta.y);
-            rect.anchoredPosition = new Vector2(-drumWidth / 2f, 0); // ÖĞĞÄ¶ÔÆë£ºÏò×óÆ«ÒÆÒ»°ë
+            float width = rect.sizeDelta.x;
+            rect.anchoredPosition = new Vector2(-width / 2f, 0);
 
-            if (startBarImage) startBarImage.gameObject.SetActive(false);
-            if (endBarImage) endBarImage.gameObject.SetActive(false);
+            if (endBarImage != null)
+            {
+                var barRect = endBarImage.rectTransform;
+                barRect.sizeDelta = new Vector2(barRect.sizeDelta.x, trackHeight);
+                barRect.anchoredPosition = Vector2.zero;
+                endBarImage.gameObject.SetActive(true);
+            }
+            if (startBarImage != null)
+                startBarImage.gameObject.SetActive(false);
         }
     }
 
+    // [åŠŸèƒ½è¯´æ˜] é¼“ç‚¹UIç‚¹å‡»å”¯ä¸€é€‰ä¸­é«˜äº®å’Œåˆ—è¡¨åŒæ­¥ -- 2024-07-14
+    public void ShowData()
+    {
+        if (timeHand != null)
+            timeHand.SetTime(this.ThisTime);
 
+        // åªå‘ä¸€æ¬¡äº‹ä»¶ï¼Œç”±æ‰€æœ‰é¢æ¿ç›‘å¬è¿™ä¸ªäº‹ä»¶ï¼ˆä¸é‡å¤å‘å¤šç§äº‹ä»¶ï¼‰
+        GameBody.Interface.SendEvent(new UIAudioEditDrumsOrbit.OnSelectDrumByCode() { DrumCode = DrumCode });
+
+        TryPreviewSound();
+    }
+
+
+    public void TryPreviewSound()
+    {
+        var editModel = GameBody.Interface.GetModel<AudioEditModel>();
+        DrumsLoadData drum = UIAttributeSetPanel.FindDrumByCode(editModel, DrumCode);
+        if (drum == null) return;
+
+        var cModel = GameBody.Interface.GetModel<DataCachingModel>();
+        string clipPath = IsTip
+            ? drum.DrwmsData.FPreAdventAudioClipPath
+            : drum.DrwmsData.FSucceedAudioClipPath;
+        var clip = cModel.GetAudioClip(clipPath);
+
+        var op = drum.DrwmsData.DtheTypeOfOperation;
+        AudioEditManager.Instance.PlayVFXWithFallback(op, clip, 1f);
+    }
 
     public void InitVisual(
         RectTransform parent,

@@ -6,6 +6,13 @@ public class mScreenFullScreen : MonoBehaviour
 {
     // Start is called before the first frame update
     bool fullScreenTrigger = false;
+
+    void Start()
+    {
+#if UNITY_EDITOR
+        ScreenModeChange();
+#endif
+    }
     public void ScreenModeChange()
     {
         if (fullScreenTrigger)

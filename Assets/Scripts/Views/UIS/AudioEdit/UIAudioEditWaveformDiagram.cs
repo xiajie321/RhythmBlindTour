@@ -10,29 +10,29 @@ using UnityEngine.UI;
 public class UIAudioEditWaveformDiagram : MonoBehaviour, IController
 {
     [SerializeField]
-    Image musicWaveFormDiagramShow;//ÒôÀÖ²¨ĞÎÍ¼ÏÔÊ¾
+    Image musicWaveFormDiagramShow;//éŸ³ä¹æ³¢å½¢å›¾æ˜¾ç¤º
     [SerializeField]
-    Color waveFormDiagramColor = Color.yellow;//²¨ĞÎÍ¼ÑÕÉ«
+    Color waveFormDiagramColor = Color.yellow;//æ³¢å½¢å›¾é¢œè‰²
     [SerializeField]
-    Color notWaveFormDiagramColor = Color.clear;//·Ç²¨ĞÎÍ¼ÇøÓòÑÕÉ«
-    int _PixelUnitsPerSecond = AudioEditConfig.PixelUnitsPerSecond;//Ã¿ÃëÏñËØµ¥Î»
-    int _EditHeight = AudioEditConfig.EditHeight;//±à¼­Æ÷¿É±à¼­·¶Î§¸ß¶È
+    Color notWaveFormDiagramColor = Color.clear;//éæ³¢å½¢å›¾åŒºåŸŸé¢œè‰²
+    int _PixelUnitsPerSecond = AudioEditConfig.PixelUnitsPerSecond;//æ¯ç§’åƒç´ å•ä½
+    int _EditHeight = AudioEditConfig.EditHeight;//ç¼–è¾‘å™¨å¯ç¼–è¾‘èŒƒå›´é«˜åº¦
     AudioClip LastAudioClip;
     /// <summary>
-    /// Éú³É²¨ĞÎÍ¼
+    /// ç”Ÿæˆæ³¢å½¢å›¾
     /// </summary>
-    /// <param name="CompulsionRun">Ç¿ÖÆÖ´ĞĞÉú³É²¨ĞÎÍ¼ÎÆÀí(Èç¹ûÎªfalseÔò»áÅĞ¶Ïµ±Ç°Ö÷ÒôÆµÊÇ·ñ²»Í¬)</param>
-    void Init(bool CompulsionRun =false)
+    /// <param name="CompulsionRun">å¼ºåˆ¶æ‰§è¡Œç”Ÿæˆæ³¢å½¢å›¾çº¹ç†(å¦‚æœä¸ºfalseåˆ™ä¼šåˆ¤æ–­å½“å‰ä¸»éŸ³é¢‘æ˜¯å¦ä¸åŒ)</param>
+    void Init(bool CompulsionRun = false)
     {
         AudioClip music = this.GetModel<AudioEditModel>().EditAudioClip;
         if (!CompulsionRun)
-            if (music == LastAudioClip) { Debug.Log("ÖØ¸´ÒôÆµ²»×ö²¨ÎÆ´¦Àí"); LastAudioClip = music; return; }
-        if (music == null) { Debug.Log("Ã»ÓĞ´ı´¦ÀíµÄÒôÆµ³õÊ¼»¯"); return; }
-        Debug.Log("³õÊ¼»¯ÒôÀÖ²¨ĞÎÍ¼Ãû³Æ: " + music.name);
+            if (music == LastAudioClip) { Debug.Log("é‡å¤éŸ³é¢‘ä¸åšæ³¢çº¹å¤„ç†"); LastAudioClip = music; return; }
+        if (music == null) { Debug.Log("æ²¡æœ‰å¾…å¤„ç†çš„éŸ³é¢‘åˆå§‹åŒ–"); return; }
+        Debug.Log("åˆå§‹åŒ–éŸ³ä¹æ³¢å½¢å›¾åç§°: " + music.name);
         Debug.Log(music.length);
-        int musicwaveformwidth = Mathf.CeilToInt(music.length * _PixelUnitsPerSecond);// ²¨ĞÎ¿í¶È
-        int dataSum = music.frequency / _PixelUnitsPerSecond; //Êı¾İÈİÁ¿
-        float[] samplingData = new float[music.samples * music.channels];//²ÉÑùÊı¾İ
+        int musicwaveformwidth = Mathf.CeilToInt(music.length * _PixelUnitsPerSecond);// æ³¢å½¢å®½åº¦
+        int dataSum = music.frequency / _PixelUnitsPerSecond; //æ•°æ®å®¹é‡
+        float[] samplingData = new float[music.samples * music.channels];//é‡‡æ ·æ•°æ®
         music.GetData(samplingData, 0);
         float[] waveformValue = new float[samplingData.Length / dataSum];
         float waveformMax = 0;

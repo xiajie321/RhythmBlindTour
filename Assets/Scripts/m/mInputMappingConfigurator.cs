@@ -22,6 +22,9 @@ public class mInputMappingConfigurator : MonoBehaviour
 
     [Header("UI 输入映射列表")]
     public List<UIInputMapping> mUIInputMappings = new();
+    [Header("UI Shift 输入映射列表")]
+    public List<UIInputMapping> mUIInputMappings_Shift = new();
+
 
     [Header("Play 模式键位设置（每个操作多个键）")]
     public KeyCode[] pKeys_Quit = new KeyCode[] { KeyCode.Escape };
@@ -58,22 +61,46 @@ public class mInputMappingConfigurator : MonoBehaviour
         switch (inputModeType)
         {
             case InputModeType.UI:
-                foreach (var map in mUIInputMappings)
                 {
-                    bool triggered = map.triggerType switch
-                    {
-                        InputTriggerType.Click => InputSystems.InputQuery(map.groupName),
-                        InputTriggerType.Down => InputSystems.InputQuery(map.groupName),
-                        InputTriggerType.Up => Input.GetKeyUp(map.keyCode),
-                        _ => false
-                    };
+                    bool isShift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
 
-                    if (triggered)
+                    if (isShift)
                     {
-                        map.targetItem?.TriggerClick();
+                        // 只响应 Shift 映射
+                        foreach (var map in mUIInputMappings_Shift)
+                        {
+                            bool keyTriggered = map.triggerType switch
+                            {
+                                InputTriggerType.Click => Input.GetKeyDown(map.keyCode),
+                                InputTriggerType.Down => Input.GetKeyDown(map.keyCode),
+                                InputTriggerType.Up => Input.GetKeyUp(map.keyCode),
+                                _ => false
+                            };
+
+                            if (keyTriggered)
+                                map.targetItem?.TriggerClick();
+                        }
                     }
+                    else
+                    {
+                        // 只响应普通 UI 映射
+                        foreach (var map in mUIInputMappings)
+                        {
+                            bool triggered = map.triggerType switch
+                            {
+                                InputTriggerType.Click => InputSystems.InputQuery(map.groupName),
+                                InputTriggerType.Down => InputSystems.InputQuery(map.groupName),
+                                InputTriggerType.Up => Input.GetKeyUp(map.keyCode),
+                                _ => false
+                            };
+
+                            if (triggered)
+                                map.targetItem?.TriggerClick();
+                        }
+                    }
+                    break;
                 }
-                break;
+
 
             case InputModeType.Edit:
             case InputModeType.Play:
@@ -126,19 +153,26 @@ public class mInputMappingConfigurator : MonoBehaviour
         }
         else if (mode == InputModeType.UI)
         {
+            LoadUIMap();
             RegisterAllUIInputMappings();
         }
     }
 
     void RegisterAllUIInputMappings()
     {
+        // 普通UI映射
         foreach (var map in mUIInputMappings)
         {
             InputSystems.ClearKey(map.groupName);
             InputSystems.AddKey(map.groupName, map.keyCode);
         }
+        // ShiftUI映射
+        foreach (var map in mUIInputMappings_Shift)
+        {
+            InputSystems.ClearKey(map.groupName);
+            InputSystems.AddKey(map.groupName, map.keyCode);
+        }
     }
-
     public void SwitchToNone()
     {
         inputModeType = InputModeType.None;
@@ -264,7 +298,16 @@ public class mInputMappingConfigurator : MonoBehaviour
         Debug.Log($"[PlayMap] 已保存至: {path}");
         Debug.Log($"[PlayMap] 内容如下:\n{json}");
     }
+    public void LoadUIMap()
+    {
+        if (!File.Exists(RuntimeJsonPath_UI)) return;
 
+        string json = File.ReadAllText(RuntimeJsonPath_UI);
+        var wrapper = JsonUtility.FromJson<UIMapWrapper>(json);
+
+        mUIInputMappings = wrapper.uiMappings ?? new List<UIInputMapping>();
+        mUIInputMappings_Shift = wrapper.uiMappings_Shift ?? new List<UIInputMapping>();
+    }
 
 
     public void LoadPlayMap()
@@ -286,14 +329,17 @@ public class mInputMappingConfigurator : MonoBehaviour
         SaveEditMapToJson();
         SavePlayMapToJson();
 
-
-        // === 3. 保存 UIMap.json（UIInputMapping List）===
-        var uiList = new UIMapWrapper();
-        uiList.uiMappings = mUIInputMappings;
+        // === 保存 UIMap.json，普通和Shift ===
+        var uiList = new UIMapWrapper
+        {
+            uiMappings = mUIInputMappings,
+            uiMappings_Shift = mUIInputMappings_Shift
+        };
         File.WriteAllText(RuntimeJsonPath_UI, JsonUtility.ToJson(uiList, true), System.Text.Encoding.UTF8);
 
         Debug.Log("[SaveAllMapsToJson] 所有输入配置已保存至 JSON 文件。");
     }
+
 
 
     // === 文件路径 ===
@@ -341,4 +387,6 @@ public enum InputTriggerType
 public class UIMapWrapper
 {
     public List<UIInputMapping> uiMappings;
+    public List<UIInputMapping> uiMappings_Shift; // 新增
 }
+

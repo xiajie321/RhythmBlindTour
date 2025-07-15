@@ -5,6 +5,7 @@ public class mAudioDataSO : ScriptableObject
 {
     public AudioClip MainAudio;
     public AudioClip FailAudio;
+    public AudioClip DefaultAudio;
     public AudioClip SucceedUp;
     public AudioClip SucceedDown;
     public AudioClip SucceedLeft;
@@ -16,4 +17,5 @@ public class mAudioDataSO : ScriptableObject
     public AudioClip TipsLeft;
     public AudioClip TipsRight;
     public AudioClip TipsClick;
+
 }

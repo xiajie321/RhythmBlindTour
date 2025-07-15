@@ -3,12 +3,14 @@ using UnityEngine;
 using Qf.Systems;
 using Qf.Models.AudioEdit;
 using Qf.ClassDatas.AudioEdit;
+using Qf.Managers;
 
 public class mInputJudgeController : MonoBehaviour
 {
     private CreateDrumsManager drumsManager;
     private AudioEditModel editModel;
     private bool inputConsumedThisFrame = false;
+
 
     private void Start()
     {
@@ -29,11 +31,17 @@ public class mInputJudgeController : MonoBehaviour
         TryHandle(TheTypeOfOperation.SwipeLeft, InputSystems.SwipeLeft);
         TryHandle(TheTypeOfOperation.SwipeRight, InputSystems.SwipeRight);
 
-        if (!inputConsumedThisFrame && InputSystems.PlayClick)
+        // 区间外输入播放默认音效
+        if (!inputConsumedThisFrame)
         {
-            HandleFirstLose(); // 输入无响应时自动处理失败鼓点
+            if (InputSystems.Click || InputSystems.SwipeUp || InputSystems.SwipeDown || InputSystems.SwipeLeft || InputSystems.SwipeRight)
+            {
+                PlayDefaultAudio();
+                inputConsumedThisFrame = true;
+            }
         }
     }
+
     public void PauseAllInputModeAutoFail(bool pause)
     {
         if (drumsManager == null || drumsManager.ActiveInputModes == null)
@@ -59,10 +67,11 @@ public class mInputJudgeController : MonoBehaviour
 
         float now = editModel.ThisTime;
 
-        // 1. 正确优先：类型匹配的鼓点（先尝试匹配）
+        // 1. 正确优先：先按时间，再按 DrumCode 排序
         var matching = activeModes
             .Where(x => x.GetOperation() == inputType)
             .OrderBy(x => x.StartTime)
+            .ThenBy(x => x.DrwmsData.DrwmsData.DrumCode)
             .ToList();
 
         foreach (var mode in matching)
@@ -73,24 +82,16 @@ public class mInputJudgeController : MonoBehaviour
                 inputConsumedThisFrame = true;
                 return;
             }
-
-            if (mode.HasJudged)
-            {
-                mode.IsActive = false;
-                inputConsumedThisFrame = true;
-                return;
-            }
+            // 不再因为 HasJudged == true 就直接消耗，继续尝试下一个
         }
 
-        // 2. 错误输入：只处理 StartTime 最早的鼓点，但仅当 now >= StartTime
+        // 2. 错误输入：保持不变
         var earliest = activeModes
             .OrderBy(x => x.StartTime)
             .FirstOrDefault();
-
         if (earliest != null && now >= earliest.StartTime)
         {
             bool result = earliest.ReceiveInput(inputType);
-
             if (result || earliest.HasJudged)
             {
                 earliest.IsActive = false;
@@ -98,11 +99,6 @@ public class mInputJudgeController : MonoBehaviour
             }
         }
     }
-
-
-
-
-
 
     void HandleFirstLose()
     {
@@ -126,6 +122,17 @@ public class mInputJudgeController : MonoBehaviour
             mode.IsActive = false;
             inputConsumedThisFrame = true;
             break;
+        }
+    }
+
+    void PlayDefaultAudio()
+    {
+        if (editModel != null && editModel.DefaultAudioClip != null)
+        {
+            float volume = editModel.DefaultAudioVolume != null ? editModel.DefaultAudioVolume.Value : 1f;
+            AudioSource vfxSource = AudioEditManager.Instance.GetVFXSource((TheTypeOfOperation)5); // 轨道编号或按需要
+            vfxSource.PlayOneShot(editModel.DefaultAudioClip, volume);
+
         }
     }
 

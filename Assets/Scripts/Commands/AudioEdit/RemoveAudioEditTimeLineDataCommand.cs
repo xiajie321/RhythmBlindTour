@@ -22,16 +22,16 @@ namespace Qf.Commands.AudioEdit
         {
             this.time = time;
         }//清除时间轴上的所有信息
-        public RemoveAudioEditTimeLineDataCommand(float time,int index)
+        public RemoveAudioEditTimeLineDataCommand(float time, int index)
         {
-            this.time=time;
-            this.index=index;
+            this.time = time;
+            this.index = index;
         }//清除时间轴上的指定信息
         protected override void OnExecute()
         {
             model = this.GetModel<AudioEditModel>();
-            if (model.EditAudioClip == null||model.Mode.Equals(SystemModeData.PlayMode) )return;
-            if(time == -1)
+            if (model.EditAudioClip == null || model.Mode.Equals(SystemModeData.PlayMode)) return;
+            if (time == -1)
             {
                 model.TimeLineData.Clear();
                 this.SendEvent<OnUpdateAudioEditDrumsUI>();
@@ -39,17 +39,23 @@ namespace Qf.Commands.AudioEdit
             }
             if (index == -1)
             {
-                if(model.TimeLineData.ContainsKey(time))
+                if (model.TimeLineData.ContainsKey(time))
                     model.TimeLineData.Remove(time);
                 this.SendEvent<OnUpdateAudioEditDrumsUI>();
                 return;
             }
+            // 只做一次删除和清理key！
             if (model.TimeLineData.ContainsKey(time))
             {
-                if (model.TimeLineData[time].Count>index)
-                    model.TimeLineData[time].Remove(model.TimeLineData[time][index]);
+                if (model.TimeLineData[time].Count > index)
+                    model.TimeLineData[time].RemoveAt(index); // 更安全写法
+
+                // 如果该 time 下鼓点已全部删除，则清理 key
+                if (model.TimeLineData[time].Count == 0)
+                    model.TimeLineData.Remove(time);
             }
             this.SendEvent<OnUpdateAudioEditDrumsUI>();
         }
+
     }
 }

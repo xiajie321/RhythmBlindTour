@@ -90,12 +90,12 @@ public class InputMode : MonoBehaviour, IController
             transform.localPosition = pos;
         }
 
-        if (PreAdventClip != null)
-        {
-            AudioEditManager.Instance.Play(
-                new AudioClip[] { PreAdventClip },
-                new float[] { drwmsData.MusicData.SPreAdventVolume });
-        }
+        // if (PreAdventClip != null)
+        // {
+        //     AudioEditManager.Instance.Play(
+        //         new AudioClip[] { PreAdventClip },
+        //         new float[] { drwmsData.MusicData.SPreAdventVolume });
+        // }
 
         if (Mathf.Approximately(EndTime, StartTime))
         {
@@ -174,10 +174,9 @@ public class InputMode : MonoBehaviour, IController
     public void SucceedByManager()
     {
         if (!editModel.Mode.Equals(SystemModeData.PlayMode)) return;
-
-        AudioEditManager.Instance.Play(
-            new AudioClip[] { _SucceedClip },
-            new float[] { drwmsData.MusicData.SSucceedVolume });
+        var op = drwmsData.DrwmsData.DtheTypeOfOperation;
+        //Debug.Log($"[LOG] 判定触发：{AudioEditManager.GetOpName(op)}（index={(int)op}），Clip={_SucceedClip?.name}");
+        AudioEditManager.Instance.PlayVFXWithFallback(op, _SucceedClip, drwmsData.MusicData.SSucceedVolume);
 
         this.SendEvent<SucceedTrigger>();
         Destroy(gameObject);
@@ -186,14 +185,15 @@ public class InputMode : MonoBehaviour, IController
     public void LoseByManager()
     {
         if (!editModel.Mode.Equals(SystemModeData.PlayMode)) return;
-
-        AudioEditManager.Instance.Play(
-            new AudioClip[] { _LoseClip },
-            new float[] { drwmsData.MusicData.SLoseVolume });
+        var op = drwmsData.DrwmsData.DtheTypeOfOperation;
+        //Debug.Log($"[LOG] 判定触发：{AudioEditManager.GetOpName(op)}（index={(int)op}），Clip={_SucceedClip?.name}");
+        AudioEditManager.Instance.PlayVFXWithFallback(op, _LoseClip, drwmsData.MusicData.SLoseVolume);
 
         this.SendEvent<LoseTrigger>();
+
         Destroy(gameObject);
     }
+
 
     public void SetOperation(TheTypeOfOperation type) => Operation = type;
     public TheTypeOfOperation GetOperation() => Operation;
@@ -203,9 +203,10 @@ public class InputMode : MonoBehaviour, IController
 
 public enum TheTypeOfOperation
 {
-    SwipeUp,
-    SwipeDown,
-    SwipeLeft,
-    SwipeRight,
-    Click
+    SwipeUp = 0,
+    SwipeDown = 1,
+    SwipeLeft = 2,
+    SwipeRight = 3,
+    Click = 4
 }
+

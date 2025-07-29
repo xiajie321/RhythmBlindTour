@@ -12,11 +12,6 @@ using TMPro;
 
 public class Test2 : MonoBehaviour, IController
 {
-    [Header("节拍BPM UI")]
-    public TMP_Dropdown dropdownBeatA;
-    public TMP_Dropdown dropdownBeatB;
-    public TMP_InputField inputBPM;
-
     [Header("UI 进度条/面板")]
     public Slider loadingSlider;
     public GameObject loadingPanel;
@@ -24,31 +19,15 @@ public class Test2 : MonoBehaviour, IController
     public mUIDrumsInspectorPanel inspectorPanel;
     public UIAudioEditDrumsOrbit drumsOrbit;
 
+    [Header("节拍与BPM设置管理器")]
+    public mBeatSetManager beatSetManager; // 新增引用，需在Inspector拖拽
+
     private float sliderTarget = 0f;
     private float sliderSpeed = 2f; // 控制平滑速度
 
-    // 下拉选项
-    private readonly int[] beatBOptions = { 1, 2, 4, 8 };
-
     private void Start()
     {
-        // 初始化下拉选项（如已在编辑器设置可省略）
-        if (dropdownBeatA != null)
-        {
-            dropdownBeatA.ClearOptions();
-            dropdownBeatA.AddOptions(new List<string> { "1", "2", "3", "4", "5", "6" });
-        }
-        if (dropdownBeatB != null)
-        {
-            dropdownBeatB.ClearOptions();
-            dropdownBeatB.AddOptions(new List<string> { "1", "2", "4", "8" });
-        }
-
-        // 可选：监听UI变更时写入本地model（如需要“实时”同步时才用，当前保存时统一写入即可）
-        // dropdownBeatA.onValueChanged.AddListener(i => { ... });
-        // dropdownBeatB.onValueChanged.AddListener(i => { ... });
-        // inputBPM.onValueChanged.AddListener(v => { ... });
-
+        // 其余UI初始化已移交到 mBeatSetManager
         StartCoroutine(DelayedAutoLoad());
     }
 
@@ -186,29 +165,9 @@ public class Test2 : MonoBehaviour, IController
         yield return null;
         setProgress?.Invoke(0.98f);
 
-        // 读取后，刷新UI到model最新数据
-        SyncModelToUI();
-    }
-
-    private void OnEnable()
-    {
-        this.RegisterEvent<SelectOptions>(v =>
-        {
-            Debug.Log($"{v.SelectObject.name}");
-        }).UnRegisterWhenDisabled(gameObject);
-    }
-
-    public void Save()
-    {
-        // UI写回model
-        var mdl = this.GetModel<AudioEditModel>();
-        mdl.BeatA = dropdownBeatA.value + 1;
-        mdl.BeatB = beatBOptions[Mathf.Clamp(dropdownBeatB.value, 0, beatBOptions.Length - 1)];
-        int bpm = 60;
-        int.TryParse(inputBPM.text, out bpm);
-        mdl.BPM = bpm;
-
-        mdl.Save();
+        // 读取后，刷新节拍UI到model最新数据
+        if (beatSetManager != null)
+            beatSetManager.Init(model);
     }
 
     public void Load()
@@ -218,28 +177,46 @@ public class Test2 : MonoBehaviour, IController
 
         this.GetModel<AudioEditModel>().Load();
 
-        // 关卡读取后，model同步到UI
-        SyncModelToUI();
+        // 移除此处的直接同步，由事件驱动
+        // if (beatSetManager != null)
+        //     beatSetManager.SyncModelToUI();
 
         inspectorPanel.RefreshList();
         drumsOrbit.ClearAllDrwmsUI();
     }
 
+    private void OnEnable()
+    {
+        this.RegisterEvent<SelectOptions>(v =>
+        {
+            Debug.Log($"{v.SelectObject.name}");
+        }).UnRegisterWhenDisabled(gameObject);
+
+        // 新增：监听数据加载事件刷新UI
+        this.RegisterEvent<AudioEditModelLoad>(v =>
+        {
+            if (beatSetManager != null)
+                beatSetManager.SyncModelToUI();
+        }).UnRegisterWhenDisabled(gameObject);
+    }
+
+    public void Save()
+    {
+        var mdl = this.GetModel<AudioEditModel>();
+        if (beatSetManager != null)
+            beatSetManager.WriteBackToModel();
+        mdl.Save();
+    }
+
+
+
     /// <summary>
-    /// 关卡数据读取后将model字段刷到UI控件
+    /// 仅用于兼容旧调用，不再负责节拍UI刷新
     /// </summary>
     private void SyncModelToUI()
     {
-        var mdl = this.GetModel<AudioEditModel>();
-        if (dropdownBeatA != null)
-            dropdownBeatA.value = Mathf.Clamp(mdl.BeatA - 1, 0, dropdownBeatA.options.Count - 1);
-        if (dropdownBeatB != null)
-        {
-            int bIdx = System.Array.IndexOf(beatBOptions, mdl.BeatB);
-            dropdownBeatB.value = bIdx == -1 ? 0 : bIdx;
-        }
-        if (inputBPM != null)
-            inputBPM.text = mdl.BPM.ToString();
+        if (beatSetManager != null)
+            beatSetManager.SyncModelToUI();
     }
 
     public void Run()

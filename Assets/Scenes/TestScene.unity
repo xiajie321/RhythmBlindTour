@@ -4140,6 +4140,7 @@ GameObject:
   m_Component:
   - component: {fileID: 177941066}
   - component: {fileID: 177941069}
+  - component: {fileID: 177941071}
   - component: {fileID: 177941070}
   - component: {fileID: 177941068}
   - component: {fileID: 177941067}
@@ -4274,6 +4275,21 @@ MonoBehaviour:
   - {fileID: 1996384261}
   - {fileID: 76689926}
   - {fileID: 275669215}
+--- !u!114 &177941071
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 177941065}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19ae825638cad46d088e0055fd0f2cc3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dropdownBeatA: {fileID: 1296541270}
+  dropdownBeatB: {fileID: 356506083}
+  inputBPM: {fileID: 1802727887}
 --- !u!1 &179312574
 GameObject:
   m_ObjectHideFlags: 0
@@ -38501,7 +38517,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 261104907}
   m_Direction: 0
   m_Value: 0
-  m_Size: 0.99990916
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -46163,13 +46179,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1425b0f831ecc254782f3a37946957f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dropdownBeatA: {fileID: 1296541270}
-  dropdownBeatB: {fileID: 356506083}
-  inputBPM: {fileID: 1802727887}
   loadingSlider: {fileID: 465032117}
   loadingPanel: {fileID: 2109794124}
   inspectorPanel: {fileID: 991624829}
   drumsOrbit: {fileID: 1304146153}
+  beatSetManager: {fileID: 177941071}
 --- !u!4 &1658636318
 Transform:
   m_ObjectHideFlags: 0

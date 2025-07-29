@@ -11,6 +11,16 @@ public class mInputMappingConfigurator : MonoBehaviour
     [Header("当前输入响应模式")]
     public InputModeType inputModeType = InputModeType.Edit;
 
+    [Header("默认音效")]
+    public AudioClip keySoundDefault;
+    public AudioClip keySoundShift;
+    public AudioClip keySoundCtrl;
+
+    public AudioSource keySoundSource;
+
+    private bool lastShiftPressed = false;
+    private bool lastCtrlPressed = false;
+
     [Header("Edit 模式键位设置（每个操作一个键）")]
     public KeyCode mKey_Quit = KeyCode.Escape;
     public KeyCode mKey_Sure = KeyCode.Return;
@@ -20,10 +30,15 @@ public class mInputMappingConfigurator : MonoBehaviour
     public KeyCode mKey_SwipeRight = KeyCode.RightArrow;
     public KeyCode mKey_Click = KeyCode.Space;
 
+
     [Header("UI 输入映射列表")]
     public List<UIInputMapping> mUIInputMappings = new();
+
     [Header("UI Shift 输入映射列表")]
     public List<UIInputMapping> mUIInputMappings_Shift = new();
+
+    [Header("UI Ctrl 输入映射列表")]
+    public List<UIInputMapping> mUIInputMappings_Ctrl = new();
 
 
     [Header("Play 模式键位设置（每个操作多个键）")]
@@ -47,10 +62,25 @@ public class mInputMappingConfigurator : MonoBehaviour
     }
     void LateUpdate()
     {
-        if (Input.GetKeyDown(KeyCode.F9))
+        // 检查Shift
+        bool nowShift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+        if (nowShift && !lastShiftPressed)
         {
-            SaveAllMapsToJson();
+            PlaySpecialKeySound(keySoundShift);
         }
+        lastShiftPressed = nowShift;
+
+        // 检查Ctrl
+        bool nowCtrl = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
+        if (nowCtrl && !lastCtrlPressed)
+        {
+            PlaySpecialKeySound(keySoundCtrl);
+        }
+        lastCtrlPressed = nowCtrl;
+
+
+        if (Input.GetKeyDown(KeyCode.F9))
+            SaveAllMapsToJson();
 
         if (inputModeType != mLastAppliedMode)
         {
@@ -63,52 +93,77 @@ public class mInputMappingConfigurator : MonoBehaviour
             case InputModeType.UI:
                 {
                     bool isShift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+                    bool isCtrl = Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl);
 
-                    if (isShift)
+                    // 优先 Ctrl，次之 Shift，再普通
+                    if (isCtrl)
                     {
-                        // 只响应 Shift 映射
+                        foreach (var map in mUIInputMappings_Ctrl)
+                        {
+                            if (IsUIInputMappingTriggered(map))
+                            {
+                                map.targetItem?.TriggerClick();
+                                PlayKeySound(map);
+                            }
+                        }
+                    }
+                    else if (isShift)
+                    {
                         foreach (var map in mUIInputMappings_Shift)
                         {
-                            bool keyTriggered = map.triggerType switch
+                            if (IsUIInputMappingTriggered(map))
                             {
-                                InputTriggerType.Click => Input.GetKeyDown(map.keyCode),
-                                InputTriggerType.Down => Input.GetKeyDown(map.keyCode),
-                                InputTriggerType.Up => Input.GetKeyUp(map.keyCode),
-                                _ => false
-                            };
-
-                            if (keyTriggered)
                                 map.targetItem?.TriggerClick();
+                                PlayKeySound(map);
+                            }
                         }
                     }
                     else
                     {
-                        // 只响应普通 UI 映射
                         foreach (var map in mUIInputMappings)
                         {
-                            bool triggered = map.triggerType switch
+                            if (IsUIInputMappingTriggered(map))
                             {
-                                InputTriggerType.Click => InputSystems.InputQuery(map.groupName),
-                                InputTriggerType.Down => InputSystems.InputQuery(map.groupName),
-                                InputTriggerType.Up => Input.GetKeyUp(map.keyCode),
-                                _ => false
-                            };
-
-                            if (triggered)
                                 map.targetItem?.TriggerClick();
+                                PlayKeySound(map);
+                            }
                         }
                     }
                     break;
                 }
-
-
             case InputModeType.Edit:
             case InputModeType.Play:
-                // 统一处理 Edit / Play 输入
                 CheckStandardInputs();
                 break;
         }
     }
+
+    // 判断是否被触发的统一方法
+    private bool IsUIInputMappingTriggered(UIInputMapping map)
+    {
+        return map.triggerType switch
+        {
+            InputTriggerType.Click => InputSystems.InputQuery(map.groupName),
+            InputTriggerType.Down => InputSystems.InputQuery(map.groupName),
+            InputTriggerType.Up => Input.GetKeyUp(map.keyCode),
+            _ => false
+        };
+    }
+
+    // 音效播放逻辑
+    private void PlayKeySound(UIInputMapping map)
+    {
+        if (keySoundSource == null || map.keySilent == true)
+            return;
+
+        var clip = map.keySound != null ? map.keySound : keySoundDefault;
+        if (clip != null)
+        {
+            keySoundSource.clip = clip;
+            keySoundSource.Play();
+        }
+    }
+
     private void CheckStandardInputs()
     {
         if (InputSystems.InputQuery("Click"))
@@ -160,14 +215,17 @@ public class mInputMappingConfigurator : MonoBehaviour
 
     void RegisterAllUIInputMappings()
     {
-        // 普通UI映射
         foreach (var map in mUIInputMappings)
         {
             InputSystems.ClearKey(map.groupName);
             InputSystems.AddKey(map.groupName, map.keyCode);
         }
-        // ShiftUI映射
         foreach (var map in mUIInputMappings_Shift)
+        {
+            InputSystems.ClearKey(map.groupName);
+            InputSystems.AddKey(map.groupName, map.keyCode);
+        }
+        foreach (var map in mUIInputMappings_Ctrl)
         {
             InputSystems.ClearKey(map.groupName);
             InputSystems.AddKey(map.groupName, map.keyCode);
@@ -298,6 +356,8 @@ public class mInputMappingConfigurator : MonoBehaviour
         Debug.Log($"[PlayMap] 已保存至: {path}");
         Debug.Log($"[PlayMap] 内容如下:\n{json}");
     }
+
+    
     public void LoadUIMap()
     {
         if (!File.Exists(RuntimeJsonPath_UI)) return;
@@ -307,8 +367,8 @@ public class mInputMappingConfigurator : MonoBehaviour
 
         mUIInputMappings = wrapper.uiMappings ?? new List<UIInputMapping>();
         mUIInputMappings_Shift = wrapper.uiMappings_Shift ?? new List<UIInputMapping>();
+        mUIInputMappings_Ctrl = wrapper.uiMappings_Ctrl ?? new List<UIInputMapping>();
     }
-
 
     public void LoadPlayMap()
     {
@@ -329,17 +389,29 @@ public class mInputMappingConfigurator : MonoBehaviour
         SaveEditMapToJson();
         SavePlayMapToJson();
 
-        // === 保存 UIMap.json，普通和Shift ===
         var uiList = new UIMapWrapper
         {
             uiMappings = mUIInputMappings,
-            uiMappings_Shift = mUIInputMappings_Shift
+            uiMappings_Shift = mUIInputMappings_Shift,
+            uiMappings_Ctrl = mUIInputMappings_Ctrl
         };
         File.WriteAllText(RuntimeJsonPath_UI, JsonUtility.ToJson(uiList, true), System.Text.Encoding.UTF8);
 
         Debug.Log("[SaveAllMapsToJson] 所有输入配置已保存至 JSON 文件。");
     }
+    private void PlaySpecialKeySound(AudioClip clip)
+    {
+        if (keySoundSource == null)
+            return;
 
+        if (clip == null)
+            clip = keySoundDefault;
+        if (clip != null)
+        {
+            keySoundSource.clip = clip;
+            keySoundSource.Play();
+        }
+    }
 
 
     // === 文件路径 ===
@@ -361,6 +433,8 @@ public struct UIInputMapping
     public KeyCode keyCode;
     public InputTriggerType triggerType;
     public UIEventsItem targetItem;
+    public AudioClip keySound;
+    public bool keySilent;
 }
 
 [System.Serializable]
@@ -383,10 +457,11 @@ public enum InputTriggerType
     Down,
     Up
 }
+
 [System.Serializable]
 public class UIMapWrapper
 {
     public List<UIInputMapping> uiMappings;
-    public List<UIInputMapping> uiMappings_Shift; // 新增
+    public List<UIInputMapping> uiMappings_Shift;
+    public List<UIInputMapping> uiMappings_Ctrl;
 }
-

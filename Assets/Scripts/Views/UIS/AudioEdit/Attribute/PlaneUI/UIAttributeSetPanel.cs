@@ -210,7 +210,7 @@ public class UIAttributeSetPanel : MonoBehaviour, IController
             Show(true);
             UpdateSwitchButtonState();
 
-            // 保留所有信息设置项与原有逻辑
+            // 仅针对当前鼓点移动
             CenterTimeAttribute.SetAction(v =>
             {
                 if (!float.TryParse(v.ToString(), out float newCenterTime)) return;
@@ -219,6 +219,7 @@ public class UIAttributeSetPanel : MonoBehaviour, IController
                 MoveDrumToNewTime(oldCenterTime, newCenterTime);
             });
 
+            // 仅针对当前鼓点移动
             PreAdventAbsoluteTime.SetAction(v =>
             {
                 if (!float.TryParse(v.ToString(), out float preAdventTime)) return;
@@ -229,6 +230,7 @@ public class UIAttributeSetPanel : MonoBehaviour, IController
                 MoveDrumToNewTime(oldCenterTime, newCenterTime);
             });
 
+            // 修改类型只影响当前鼓点
             DrwmType.SetAction(v =>
             {
                 ls.DrwmsData.DtheTypeOfOperation = (TheTypeOfOperation)v;
@@ -236,45 +238,58 @@ public class UIAttributeSetPanel : MonoBehaviour, IController
                 this.SendEvent<OnUpdateAudioEditDrumsUI>();
             });
 
+            // ——以下全部为批量应用到同类——
             PreAdventAudio.SetAction(v =>
             {
-                ls.DrwmsData.FPreAdventAudioClipPath = ((AudioClip)v).name;
-                PreAdventAudio.SetShowFileName(ls.DrwmsData.FPreAdventAudioClipPath);
+                string clipName = ((AudioClip)v).name;
+                var curType = ls.DrwmsData.DtheTypeOfOperation;
+                ApplyToAllDrumsOfType(curType, drum => drum.DrwmsData.FPreAdventAudioClipPath = clipName);
+                PreAdventAudio.SetShowFileName(clipName);
                 this.SendEvent<OnUpdateAudioEditDrumsUI>();
             });
 
             SucceedAudio.SetAction(v =>
             {
-                ls.DrwmsData.FSucceedAudioClipPath = ((AudioClip)v).name;
-                SucceedAudio.SetShowFileName(ls.DrwmsData.FSucceedAudioClipPath);
+                string clipName = ((AudioClip)v).name;
+                var curType = ls.DrwmsData.DtheTypeOfOperation;
+                ApplyToAllDrumsOfType(curType, drum => drum.DrwmsData.FSucceedAudioClipPath = clipName);
+                SucceedAudio.SetShowFileName(clipName);
                 this.SendEvent<OnUpdateAudioEditDrumsUI>();
             });
 
             LoseAudioClip.SetAction(v =>
             {
-                ls.DrwmsData.FLoseAudioClipPath = ((AudioClip)v).name;
-                LoseAudioClip.SetShowFileName(ls.DrwmsData.FLoseAudioClipPath);
+                string clipName = ((AudioClip)v).name;
+                var curType = ls.DrwmsData.DtheTypeOfOperation;
+                ApplyToAllDrumsOfType(curType, drum => drum.DrwmsData.FLoseAudioClipPath = clipName);
+                LoseAudioClip.SetShowFileName(clipName);
                 this.SendEvent<OnUpdateAudioEditDrumsUI>();
             });
 
             PreAdventAudioVolum.SetAction(v =>
             {
-                ls.MusicData.SPreAdventVolume = (float)v;
-                PreAdventAudioVolum.SetValueShow(ls.MusicData.SPreAdventVolume);
+                float vol = (float)v;
+                var curType = ls.DrwmsData.DtheTypeOfOperation;
+                ApplyToAllDrumsOfType(curType, drum => drum.MusicData.SPreAdventVolume = vol);
+                PreAdventAudioVolum.SetValueShow(vol);
                 this.SendEvent<OnUpdateAudioEditDrumsUI>();
             });
 
             SucceedAudioVolum.SetAction(v =>
             {
-                ls.MusicData.SSucceedVolume = (float)v;
-                SucceedAudioVolum.SetValueShow(ls.MusicData.SSucceedVolume);
+                float vol = (float)v;
+                var curType = ls.DrwmsData.DtheTypeOfOperation;
+                ApplyToAllDrumsOfType(curType, drum => drum.MusicData.SSucceedVolume = vol);
+                SucceedAudioVolum.SetValueShow(vol);
                 this.SendEvent<OnUpdateAudioEditDrumsUI>();
             });
 
             LoseAudioClipVolum.SetAction(v =>
             {
-                ls.MusicData.SLoseVolume = (float)v;
-                LoseAudioClipVolum.SetValueShow(ls.MusicData.SLoseVolume);
+                float vol = (float)v;
+                var curType = ls.DrwmsData.DtheTypeOfOperation;
+                ApplyToAllDrumsOfType(curType, drum => drum.MusicData.SLoseVolume = vol);
+                LoseAudioClipVolum.SetValueShow(vol);
                 this.SendEvent<OnUpdateAudioEditDrumsUI>();
             });
 
@@ -282,7 +297,8 @@ public class UIAttributeSetPanel : MonoBehaviour, IController
             {
                 if (float.TryParse(v.ToString(), out float result))
                 {
-                    ls.DrwmsData.VTimeOfExistence = result;
+                    var curType = ls.DrwmsData.DtheTypeOfOperation;
+                    ApplyToAllDrumsOfType(curType, drum => drum.DrwmsData.VTimeOfExistence = result);
                     TimeOfExistence.SetValueShow(result.ToString());
                     this.SendEvent<OnUpdateAudioEditDrumsUI>();
                 }
@@ -292,7 +308,8 @@ public class UIAttributeSetPanel : MonoBehaviour, IController
             {
                 if (float.TryParse(v.ToString(), out float result))
                 {
-                    ls.DrwmsData.VPreAdventAudioClipOffsetTime = result;
+                    var curType = ls.DrwmsData.DtheTypeOfOperation;
+                    ApplyToAllDrumsOfType(curType, drum => drum.DrwmsData.VPreAdventAudioClipOffsetTime = result);
                     PreAdventAudioClipOffsetTime.SetValueShow(result.ToString());
                     this.SendEvent<OnUpdateAudioEditDrumsUI>();
                 }
@@ -445,6 +462,15 @@ public class UIAttributeSetPanel : MonoBehaviour, IController
         UpButton.gameObject.SetActive(pos > 0);
         DownButton.gameObject.SetActive(pos >= 0 && pos < drumCodeList.Count - 1);
     }
+
+    void ApplyToAllDrumsOfType(TheTypeOfOperation type, Action<DrumsLoadData> action)
+    {
+        foreach (var pair in editModel.TimeLineData)
+            foreach (var drum in pair.Value)
+                if (drum.DrwmsData.DtheTypeOfOperation == type)
+                    action(drum);
+    }
+
 
     void Update() { }
 }

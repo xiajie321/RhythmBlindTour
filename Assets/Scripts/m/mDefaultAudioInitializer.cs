@@ -34,8 +34,11 @@ public class mDefaultAudioInitializer : MonoBehaviour, IController
     [SerializeField] private Vector2Int waveformResolution = new Vector2Int(1024, 128);
 
 
-
-    public void DoDefaultAudioInit()
+    void Start()
+    {
+        DoDefaultAudioInit();
+    }
+    private void DoDefaultAudioInit()
     {
         var model = this.GetModel<AudioEditModel>();
         model.BeatA = defaultBeatA;

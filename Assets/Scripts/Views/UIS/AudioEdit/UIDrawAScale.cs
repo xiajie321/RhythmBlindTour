@@ -274,39 +274,39 @@ public class UIDrawAScale : MonoBehaviour, IController
     float lastBeatTime = -100f;
     float lastCheckTime = 0f; // 类成员
 
-    void Update()
-    {
-        if (beatInfoList.Count == 0 || editModel == null) return;
-        bool isControlRunning = Qf.Managers.AudioEditManager.Instance?.IsControlRunning ?? false;
-        if (!isControlRunning) return;
+    // void Update()
+    // {
+    //     if (beatInfoList.Count == 0 || editModel == null) return;
+    //     bool isControlRunning = Qf.Managers.AudioEditManager.Instance?.IsControlRunning ?? false;
+    //     if (!isControlRunning) return;
 
-        float now = editModel.ThisTime;
-        float prev = lastCheckTime;
-        lastCheckTime = now;
+    //     float now = editModel.ThisTime;
+    //     float prev = lastCheckTime;
+    //     lastCheckTime = now;
 
-        // 让 prev < now
-        if (now < prev)
-        {
-            prev = now; // 跳播/倒退，直接重设
-        }
+    //     // 让 prev < now
+    //     if (now < prev)
+    //     {
+    //         prev = now; // 跳播/倒退，直接重设
+    //     }
 
-        // 查找所有区间内未触发过的beat
-        for (int i = 0; i < beatInfoList.Count; i++)
-        {
-            var beat = beatInfoList[i];
-            // 在上一次和这一次之间的所有点
-            if (beat.Time > prev && beat.Time <= now && !Mathf.Approximately(beat.Time, lastBeatTime))
-            {
-                lastBeatTime = beat.Time;
-                OnBeatArrive?.Invoke(beat.MeasureIndex, beat.BeatInMeasure, beat.BPM, beat.Time);
-                currentMeasureStr = (beat.MeasureIndex + 1).ToString();
-                currentBeatInMeasureStr = (beat.BeatInMeasure + 1).ToString();
-                currentBPMStr = beat.BPM.ToString("0");
-                OnInspectorBeatArrive?.Invoke();
-                // 不break，所有点都补全！
-            }
-        }
-    }
+    //     // 查找所有区间内未触发过的beat
+    //     for (int i = 0; i < beatInfoList.Count; i++)
+    //     {
+    //         var beat = beatInfoList[i];
+    //         // 在上一次和这一次之间的所有点
+    //         if (beat.Time > prev && beat.Time <= now && !Mathf.Approximately(beat.Time, lastBeatTime))
+    //         {
+    //             lastBeatTime = beat.Time;
+    //             OnBeatArrive?.Invoke(beat.MeasureIndex, beat.BeatInMeasure, beat.BPM, beat.Time);
+    //             currentMeasureStr = (beat.MeasureIndex + 1).ToString();
+    //             currentBeatInMeasureStr = (beat.BeatInMeasure + 1).ToString();
+    //             currentBPMStr = beat.BPM.ToString("0");
+    //             OnInspectorBeatArrive?.Invoke();
+    //             // 不break，所有点都补全！
+    //         }
+    //     }
+    // }
 
 
     // 便捷移动/跳转方法全部用统一逻辑

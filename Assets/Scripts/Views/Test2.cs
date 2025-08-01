@@ -12,6 +12,8 @@ using TMPro;
 
 public class Test2 : MonoBehaviour, IController
 {
+    [Header("节拍BPM UI")]
+    public mBeatSetManager beatSet;
     [Header("UI 进度条/面板")]
     public Slider loadingSlider;
     public GameObject loadingPanel;
@@ -19,15 +21,14 @@ public class Test2 : MonoBehaviour, IController
     public mUIDrumsInspectorPanel inspectorPanel;
     public UIAudioEditDrumsOrbit drumsOrbit;
 
-    [Header("节拍与BPM设置管理器")]
-    public mBeatSetManager beatSetManager; // 新增引用，需在Inspector拖拽
-
     private float sliderTarget = 0f;
     private float sliderSpeed = 2f; // 控制平滑速度
 
+    // 下拉选项
+    private readonly int[] beatBOptions = { 1, 2, 4, 8 };
+
     private void Start()
     {
-        // 其余UI初始化已移交到 mBeatSetManager
         StartCoroutine(DelayedAutoLoad());
     }
 
@@ -129,7 +130,7 @@ public class Test2 : MonoBehaviour, IController
             var defaultInit = FindObjectOfType<mDefaultAudioInitializer>();
             if (defaultInit != null)
             {
-                defaultInit.DoDefaultAudioInit();
+                //defaultInit.DoDefaultAudioInit();
                 Debug.Log("[AutoLoad] Default audio settings initialized by mDefaultAudioInitializer.");
             }
             setProgress?.Invoke(1f);
@@ -165,24 +166,8 @@ public class Test2 : MonoBehaviour, IController
         yield return null;
         setProgress?.Invoke(0.98f);
 
-        // 读取后，刷新节拍UI到model最新数据
-        if (beatSetManager != null)
-            beatSetManager.Init(model);
-    }
-
-    public void Load()
-    {
-        inspectorPanel.ClearAll();
-        drumsOrbit.ClearAllDrwmsUI();
-
-        this.GetModel<AudioEditModel>().Load();
-
-        // 移除此处的直接同步，由事件驱动
-        // if (beatSetManager != null)
-        //     beatSetManager.SyncModelToUI();
-
-        inspectorPanel.RefreshList();
-        drumsOrbit.ClearAllDrwmsUI();
+        // 读取后，刷新UI到model最新数据
+        SyncModelToUI();
     }
 
     private void OnEnable()
@@ -191,33 +176,126 @@ public class Test2 : MonoBehaviour, IController
         {
             Debug.Log($"{v.SelectObject.name}");
         }).UnRegisterWhenDisabled(gameObject);
-
-        // 新增：监听数据加载事件刷新UI
-        this.RegisterEvent<AudioEditModelLoad>(v =>
-        {
-            if (beatSetManager != null)
-                beatSetManager.SyncModelToUI();
-        }).UnRegisterWhenDisabled(gameObject);
     }
 
+    /// <summary>
+    /// 保存时各阶段Log
+    /// </summary>
     public void Save()
     {
         var mdl = this.GetModel<AudioEditModel>();
-        if (beatSetManager != null)
-            beatSetManager.WriteBackToModel();
+        Debug.Log($"[保存] 当前Model：BeatA={mdl.BeatA}, BeatB={mdl.BeatB}, BPM={mdl.BPM}");
+
+        // UI -> Model
+        int bpm = 60;
+        int uiBeatA = beatSet.dropdownBeatA != null ? beatSet.dropdownBeatA.value + 1 : -1;
+        int uiBeatB = beatSet.dropdownBeatB != null ? beatBOptions[Mathf.Clamp(beatSet.dropdownBeatB.value, 0, beatBOptions.Length - 1)] : -1;
+        if (beatSet.inputBPM != null)
+            int.TryParse(beatSet.inputBPM.text, out bpm);
+
+        Debug.Log($"[保存] 即将保存到Model：BeatA={uiBeatA}, BeatB={uiBeatB}, BPM={bpm}");
+
+        mdl.BeatA = uiBeatA;
+        mdl.BeatB = uiBeatB;
+        mdl.BPM = bpm;
+
         mdl.Save();
+
+        Debug.Log($"[保存] Save()调用完成。Model：BeatA={mdl.BeatA}, BeatB={mdl.BeatB}, BPM={mdl.BPM}");
     }
 
-
-
     /// <summary>
-    /// 仅用于兼容旧调用，不再负责节拍UI刷新
+    /// 加载时各阶段Log
+    /// </summary>
+    public void Load()
+    {
+        // 应用前
+        var mdlBefore = this.GetModel<AudioEditModel>();
+        Debug.Log($"[读取前] 当前应用(即UI上) BeatA={GetCurrentUIBeatA()}, BeatB={GetCurrentUIBeatB()}, BPM={GetCurrentUIBPM()}");
+        Debug.Log($"[读取前] Model中 BeatA={mdlBefore.BeatA}, BeatB={mdlBefore.BeatB}, BPM={mdlBefore.BPM}");
+
+        inspectorPanel.ClearAll();
+        drumsOrbit.ClearAllDrwmsUI();
+
+        // Model读取文件
+        this.GetModel<AudioEditModel>().Load();
+
+        // 读取后，马上输出
+        var mdlAfter = this.GetModel<AudioEditModel>();
+        Debug.Log($"[读取后] Model中 BeatA={mdlAfter.BeatA}, BeatB={mdlAfter.BeatB}, BPM={mdlAfter.BPM}");
+
+
+        // Model同步到UI
+        SyncModelToUI();
+
+        // 应用到UI后再次输出
+        Debug.Log($"[应用到UI] BeatA={GetCurrentUIBeatA()}, BeatB={GetCurrentUIBeatB()}, BPM={GetCurrentUIBPM()}");
+
+        inspectorPanel.RefreshList();
+        drumsOrbit.ClearAllDrwmsUI();
+    }
+    private int GetCurrentUIBeatA() => beatSet.dropdownBeatA != null ? beatSet.dropdownBeatA.value + 1 : -1;
+    private int GetCurrentUIBeatB() => beatSet.dropdownBeatB != null ? beatBOptions[Mathf.Clamp(beatSet.dropdownBeatB.value, 0, beatBOptions.Length - 1)] : -1;
+    private int GetCurrentUIBPM()
+    {
+        int bpm = 0;
+        if (beatSet.inputBPM != null)
+            int.TryParse(beatSet.inputBPM.text, out bpm);
+        return bpm;
+    }
+    /// <summary>
+    /// 关卡数据读取后将model字段刷到UI控件
     /// </summary>
     private void SyncModelToUI()
     {
-        if (beatSetManager != null)
-            beatSetManager.SyncModelToUI();
+        var mdl = this.GetModel<AudioEditModel>();
+
+        // ---- 临时移除监听 ----
+        beatSet.dropdownBeatA.onValueChanged.RemoveAllListeners();
+        beatSet.dropdownBeatB.onValueChanged.RemoveAllListeners();
+        beatSet.inputBPM.onEndEdit.RemoveAllListeners();
+
+        // 设置 value
+        beatSet.dropdownBeatA.value = Mathf.Clamp(mdl.BeatA - 1, 0, beatSet.dropdownBeatA.options.Count - 1);
+        int bIdx = System.Array.IndexOf(beatBOptions, mdl.BeatB);
+        beatSet.dropdownBeatB.value = bIdx == -1 ? 0 : bIdx;
+        beatSet.inputBPM.text = mdl.BPM.ToString();
+
+        // ---- 恢复监听 ----
+        beatSet.dropdownBeatA.onValueChanged.AddListener(i =>
+        {
+            var model = GameBody.Interface.GetModel<AudioEditModel>();
+            if (int.TryParse(beatSet.dropdownBeatA.options[i].text, out int newValue) && newValue != model.BeatA)
+            {
+                model.BeatA = newValue;
+                if (beatSet != null) beatSet.RefreshBeatMeasureList();
+            }
+        });
+
+        beatSet.dropdownBeatB.onValueChanged.AddListener(i =>
+        {
+            var model = GameBody.Interface.GetModel<AudioEditModel>();
+            if (int.TryParse(beatSet.dropdownBeatB.options[i].text, out int newValue) && newValue != model.BeatB)
+            {
+                model.BeatB = newValue;
+                if (beatSet != null) beatSet.RefreshBeatMeasureList();
+            }
+        });
+
+        beatSet.inputBPM.onEndEdit.AddListener(str =>
+        {
+            var model = GameBody.Interface.GetModel<AudioEditModel>();
+            if (int.TryParse(str, out int newBpm) && newBpm != model.BPM)
+            {
+                model.BPM = newBpm;
+                if (beatSet != null) beatSet.RefreshBeatMeasureList();
+            }
+        });
+
+        if (beatSet != null)
+            beatSet.TryCacheInitialValues();
     }
+
 
     public void Run()
     {

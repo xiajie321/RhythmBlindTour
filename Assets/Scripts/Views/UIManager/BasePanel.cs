@@ -14,7 +14,16 @@ namespace Views.UIManager
 
         protected virtual void Awake()
         {
-            canvasGroup = GetComponent<CanvasGroup>() ?? gameObject.AddComponent<CanvasGroup>();
+            canvasGroup = GetComponent<CanvasGroup>();
+            if (canvasGroup == null)
+            {
+                canvasGroup = gameObject.AddComponent<CanvasGroup>();
+            }
+        }
+
+        private void Start()
+        {
+            Init();
         }
 
         protected virtual void Update()

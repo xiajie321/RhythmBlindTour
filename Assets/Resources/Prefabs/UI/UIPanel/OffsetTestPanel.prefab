@@ -991,6 +991,18 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
+        - m_Target: {fileID: 3372672311128759530}
+          m_TargetAssemblyTypeName: TestOffset.OffsetController, Assembly-CSharp
+          m_MethodName: AudioPlayScheduled
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
 --- !u!114 &4295164493509228816
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1703,6 +1715,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 288896989861363816}
+  - component: {fileID: 3779418559603530380}
+  - component: {fileID: 3372672311128759530}
   m_Layer: 5
   m_Name: OffsetTestPanel
   m_TagString: Untagged
@@ -1735,6 +1749,36 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 1920, y: 1080}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &3779418559603530380
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7060997632123400111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a37c507726594b238c2205f6305a0a8a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isShow: 0
+  quitBtn: {fileID: 994474108090888041}
+--- !u!114 &3372672311128759530
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7060997632123400111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 443f0fa2033d452cbeb90d8523faf14a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  current: {fileID: 2092323631993169013}
+  total: {fileID: 6500987035965293425}
+  tickClip: {fileID: 8300000, guid: 32870cf5e373d3947b13680197f6bae4, type: 3}
+  delayTime: 0.5
 --- !u!1 &7479283570043161313
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using QFramework;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.EventSystems;
 
 namespace Views.UIManager
 {
@@ -70,4 +73,18 @@ namespace Views.UIManager
             return null;
         }
     }
+
+    public static class EventTriggerExtensions
+    {
+        public static void AddListener(this EventTrigger trigger,UnityAction<BaseEventData> callback, EventTriggerType type = EventTriggerType.PointerClick)
+        {
+            EventTrigger.Entry entry = new EventTrigger.Entry
+            {
+                eventID = type
+            };
+            entry.callback.AddListener(callback);
+            trigger.triggers.Add(entry);
+        }
+    }
+    
 }

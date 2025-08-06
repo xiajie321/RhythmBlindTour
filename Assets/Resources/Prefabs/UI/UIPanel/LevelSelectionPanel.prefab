@@ -2466,13 +2466,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9123545506788198309}
+  - component: {fileID: 5026956414873946846}
   m_Layer: 5
   m_Name: LevelSelectionPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &9123545506788198309
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2498,6 +2499,19 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 1920, y: 1080}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &5026956414873946846
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6982683180089551298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c114322389642468b82bc12526b12ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isShow: 0
 --- !u!1 &7071630599588814163
 GameObject:
   m_ObjectHideFlags: 0

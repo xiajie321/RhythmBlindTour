@@ -18,10 +18,12 @@ namespace TestOffset
     public class OffsetController : MonoBehaviour, IController
     {
         //view
-        private TMP_Text current;
-        private TMP_Text total;
+        public TMP_Text current;
+        public TMP_Text total;
 
-        public AudioSource audioSource;
+        public AudioClip tickClip;
+        
+        private AudioSource audioSource;
         private OffsetModel offsetModel;
 
         private bool isPlaying = false;
@@ -32,8 +34,10 @@ namespace TestOffset
         private void Start()
         {
             //view
-            current = GameObject.Find("current").GetComponent<TMP_Text>();
-            total = GameObject.Find("total").GetComponent<TMP_Text>();
+            /*current = GameObject.Find("current").GetComponent<TMP_Text>();
+            total = GameObject.Find("total").GetComponent<TMP_Text>();*/
+            
+            audioSource = Camera.main.GetComponent<AudioSource>();
             //model
             offsetModel = this.GetModel<OffsetModel>();
 
@@ -79,9 +83,10 @@ namespace TestOffset
         public void AudioPlayScheduled()
         {
             isPlaying = true;
+            audioSource.clip = tickClip;
             inputTimes.Clear();
-            double time;
-            audioSource.PlayScheduled(time = AudioSettings.dspTime + delayTime);
+            double time=AudioSettings.dspTime + delayTime;
+            audioSource.PlayScheduled(time);
             Debug.Log($"开始时间：{time}");
             startTime = time;
         }

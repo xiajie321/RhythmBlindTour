@@ -158,7 +158,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4122457144327140198}
   m_Layer: 5
-  m_Name: "\u4E3B\u754C\u9762"
+  m_Name: MainPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

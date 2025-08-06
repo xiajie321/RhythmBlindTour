@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using QFramework;
 using UnityEngine;
 
 namespace Views.UIManager
@@ -8,9 +10,64 @@ namespace Views.UIManager
 
         private Transform canvasTrans;
 
+        //显示时存入，隐去时删除
+        public Dictionary<string, BasePanel> panelDic = new Dictionary<string, BasePanel>();
+
         private UIManager()
         {
             GameObject canvas = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/UI/Canvas"));
+            canvasTrans = canvas.transform;
+            GameObject.DontDestroyOnLoad(canvasTrans);
+        }
+
+        public T ShowPanel<T>() where T : BasePanel
+        {
+            string name = typeof(T).Name;
+            if (panelDic.ContainsKey(name))
+            {
+                return panelDic[name] as T;
+            }
+
+            GameObject panelObj = GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/UI/UIPanel/" + name),
+                canvasTrans, false);
+
+            T panel = panelObj.GetComponent<T>();
+            panelDic.Add(name, panel);
+            panel.ShowMe();
+
+            return panel;
+        }
+
+        public void HidePanel<T>(bool isFade = false) where T : BasePanel
+        {
+            string name = typeof(T).Name;
+            if (!panelDic.TryGetValue(name, out BasePanel panel)) return;
+
+            if (isFade)
+            {
+                panel.HideMe(() =>
+                {
+                    GameObject.Destroy(panel.gameObject);
+                    panelDic.Remove(name);
+                });
+            }
+            else
+            {
+                GameObject.Destroy(panel.gameObject);
+                panelDic.Remove(name);
+            }
+        }
+
+        public T GetPanel<T>() where T : BasePanel
+        {
+            string name = typeof(T).Name;
+
+            if (panelDic.TryGetValue(name, out var panel))
+            {
+                return panel as T;
+            }
+
+            return null;
         }
     }
 }

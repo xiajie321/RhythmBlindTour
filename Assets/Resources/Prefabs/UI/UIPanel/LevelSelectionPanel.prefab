@@ -2467,7 +2467,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9123545506788198309}
   m_Layer: 5
-  m_Name: "\u5173\u5361\u9009\u62E9\u754C\u9762"
+  m_Name: LevelSelectionPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

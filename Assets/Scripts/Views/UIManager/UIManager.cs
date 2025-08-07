@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Qf.Models;
 using QFramework;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -7,6 +8,14 @@ using UnityEngine.EventSystems;
 
 namespace Views.UIManager
 {
+    public class UIArchitecture : Architecture<UIArchitecture>
+    {
+        protected override void Init()
+        {
+            this.RegisterModel(new GameSettingModel());
+        }
+    }
+    
     public class UIManager
     {
         public static UIManager Instance { get; } = new UIManager();
@@ -86,5 +95,4 @@ namespace Views.UIManager
             trigger.triggers.Add(entry);
         }
     }
-    
 }

@@ -15,7 +15,7 @@ namespace Views.UIManager
             this.RegisterModel(new GameSettingModel());
         }
     }
-    
+
     public class UIManager
     {
         public static UIManager Instance { get; } = new UIManager();
@@ -85,13 +85,26 @@ namespace Views.UIManager
 
     public static class EventTriggerExtensions
     {
-        public static void AddListener(this EventTrigger trigger,UnityAction<BaseEventData> callback, EventTriggerType type = EventTriggerType.PointerClick)
+        public static void AddListener(this EventTrigger trigger, UnityAction<BaseEventData> callback,
+            EventTriggerType type = EventTriggerType.PointerClick)
         {
             EventTrigger.Entry entry = new EventTrigger.Entry
             {
                 eventID = type
             };
             entry.callback.AddListener(callback);
+            trigger.triggers.Add(entry);
+        }
+
+        public static void AddListener(this EventTrigger trigger, UnityAction callback,
+            EventTriggerType type = EventTriggerType.PointerClick)
+        {
+            EventTrigger.Entry entry = new EventTrigger.Entry
+            {
+                eventID = type
+            };
+
+            entry.callback.AddListener((data) => callback());
             trigger.triggers.Add(entry);
         }
     }

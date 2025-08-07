@@ -22,8 +22,8 @@ namespace TestOffset
         public TMP_Text total;
 
         public AudioClip tickClip;
-        
-        private AudioSource audioSource;
+
+        public AudioSource audioSource;
         private OffsetModel offsetModel;
 
         private bool isPlaying = false;
@@ -36,8 +36,6 @@ namespace TestOffset
             //view
             /*current = GameObject.Find("current").GetComponent<TMP_Text>();
             total = GameObject.Find("total").GetComponent<TMP_Text>();*/
-            
-            audioSource = Camera.main.GetComponent<AudioSource>();
             //model
             offsetModel = this.GetModel<OffsetModel>();
 
@@ -85,7 +83,7 @@ namespace TestOffset
             isPlaying = true;
             audioSource.clip = tickClip;
             inputTimes.Clear();
-            double time=AudioSettings.dspTime + delayTime;
+            double time = AudioSettings.dspTime + delayTime;
             audioSource.PlayScheduled(time);
             Debug.Log($"开始时间：{time}");
             startTime = time;

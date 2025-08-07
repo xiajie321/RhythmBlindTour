@@ -2988,6 +2988,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isShow: 0
+  levelIndex:
+  - {fileID: 3826405936820212722}
+  - {fileID: 6802381454785076362}
+  - {fileID: 286393635368923722}
+  - {fileID: 5144006780798931843}
+  - {fileID: 1078205110125636306}
+  prev: {fileID: 0}
+  next: {fileID: 0}
+  play: {fileID: 0}
+  replay: {fileID: 0}
+  menu: {fileID: 8028610815733981960}
 --- !u!1 &7071630599588814163
 GameObject:
   m_ObjectHideFlags: 0

@@ -14,7 +14,10 @@ namespace Views.UIManager.UIPanels
         public EventTrigger menu;
         protected override void Init()
         {
-            
+            menu.AddListener(() =>
+            {
+                UIManager.Instance.ShowPanel<GameMenuPanel>();
+            });
         }
     }
 }

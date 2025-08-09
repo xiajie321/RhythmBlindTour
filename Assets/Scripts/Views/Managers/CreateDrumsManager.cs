@@ -68,7 +68,7 @@ public class CreateDrumsManager : ManagerBase
     /// <param name="vector3"></param>
     public CreateSetClass CreateDrums(TheTypeOfOperation operation, DrumsLoadData drumsLoadData = null)
     {
-        GameObject gameObject = Instantiate(Resources.Load<GameObject>(PathConfig.ProfabsOath + "InputMode"));
+        GameObject gameObject = Instantiate(Resources.Load<GameObject>(PathConfig.PrefabsOath + "InputMode"));
         InputMode mode = gameObject.GetComponent<InputMode>();
         mode.DrwmsData = drumsLoadData;
         mode.PreAdventClip = cachingModel.GetAudioClip(drumsLoadData.DrwmsData.FPreAdventAudioClipPath);

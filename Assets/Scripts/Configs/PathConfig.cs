@@ -8,8 +8,8 @@ public class PathConfig
     public const string SpritePath = "Sprites/";
     public const string PrefabPath = "Prefabs/SystemGameObjects";
     public const string AudioPath = "Audios/";
-    public const string ProfabsOath = "Profabs/";
-    //¾ßÌå
+    public const string PrefabsOath = "Prefabs/";
+    //ï¿½ï¿½ï¿½ï¿½
     //Planting
     public const string SoilSpritePath = "Sprites/Soil";
     public const string lockSoilSpritePath = "Sprites/LockSoil";

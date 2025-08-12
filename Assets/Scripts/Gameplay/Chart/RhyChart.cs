@@ -1,12 +1,12 @@
 using System;
 using Gameplay.Managers;
+using Gameplay.Managers.Note;
 using UnityEngine;
 
 namespace Gameplay.Chart
 {
     public class RhyChart
     {
-        
     }
 
     [Serializable]
@@ -28,7 +28,7 @@ namespace Gameplay.Chart
         public bool Judged;
         public bool Previewed;
         public float Position;
-        
+
         protected GameObject instance;
 
         public GameObject Instance
@@ -94,6 +94,114 @@ namespace Gameplay.Chart
         {
             Instance = GameObject.Instantiate(RhyTapNoteManager.Instance.TapNotePrefab,
                 RhyTapNoteManager.Instance.NoteLayer);
+        }
+    }
+
+    [Serializable]
+    public class RhySlideLeftNote : RhyNote
+    {
+        public RhySlideLeftNote()
+        {
+        }
+
+        public RhySlideLeftNote(int timing)
+        {
+            Timing = timing;
+        }
+
+        public override RhyEvent Clone()
+        {
+            return new RhySlideLeftNote()
+            {
+                Timing = Timing,
+            };
+        }
+
+        public override void Instantiate()
+        {
+            Instance = GameObject.Instantiate(RhySlideLeftNoteManager.Instance.NotePrefab,
+                RhySlideLeftNoteManager.Instance.NoteLayer);
+        }
+    }
+
+    [Serializable]
+    public class RhySlideRightNote : RhyNote
+    {
+        public RhySlideRightNote()
+        {
+        }
+
+        public RhySlideRightNote(int timing)
+        {
+            Timing = timing;
+        }
+
+        public override RhyEvent Clone()
+        {
+            return new RhySlideRightNote()
+            {
+                Timing = Timing,
+            };
+        }
+
+        public override void Instantiate()
+        {
+            Instance = GameObject.Instantiate(RhySlideRightNoteManager.Instance.NotePrefab,
+                RhySlideRightNoteManager.Instance.NoteLayer);
+        }
+    }
+
+    [Serializable]
+    public class RhySlideUpNote : RhyNote
+    {
+        public RhySlideUpNote()
+        {
+        }
+
+        public RhySlideUpNote(int timing)
+        {
+            Timing = timing;
+        }
+
+        public override RhyEvent Clone()
+        {
+            return new RhySlideUpNote()
+            {
+                Timing = Timing,
+            };
+        }
+
+        public override void Instantiate()
+        {
+            Instance = GameObject.Instantiate(RhySlideUpNoteManager.Instance.NotePrefab,
+                RhySlideUpNoteManager.Instance.NoteLayer);
+        }
+    }
+
+    [Serializable]
+    public class RhySlideDownNote : RhyNote
+    {
+        public RhySlideDownNote()
+        {
+        }
+
+        public RhySlideDownNote(int timing)
+        {
+            Timing = timing;
+        }
+
+        public override RhyEvent Clone()
+        {
+            return new RhySlideUpNote()
+            {
+                Timing = Timing,
+            };
+        }
+
+        public override void Instantiate()
+        {
+            Instance = GameObject.Instantiate(RhySlideDownNoteManager.Instance.NotePrefab,
+                RhySlideDownNoteManager.Instance.NoteLayer);
         }
     }
 }

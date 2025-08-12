@@ -1,5 +1,6 @@
 using System;
 using Gameplay.Managers;
+using Gameplay.Managers.Note;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -100,8 +101,6 @@ namespace Gameplay
             {
                 OnMusicEnd.Invoke();
             }
-
-            Debug.Log($"AudioTiming: {AudioTiming},ChartTiming: {ChartTiming},AudioTimingWithoutGlobalOffset: {AudioTimingWithoutGlobalOffset}");
         }
 
         public void Play()
@@ -123,6 +122,10 @@ namespace Gameplay
             RhyAudioManager.Instance.Pause();
             RhyAudioManager.Instance.Timing = 0;
             RhyTapNoteManager.Instance.ResetJudgeAndPreview();
+            RhySlideLeftNoteManager.Instance.ResetJudgeAndPreview();
+            RhySlideRightNoteManager.Instance.ResetJudgeAndPreview();
+            RhySlideUpNoteManager.Instance.ResetJudgeAndPreview();
+            RhySlideDownNoteManager.Instance.ResetJudgeAndPreview();
         }
         
     }

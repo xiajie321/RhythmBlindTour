@@ -1,33 +1,32 @@
-using System;
 using System.Collections.Generic;
 using Gameplay.Chart;
 using UnityEngine;
 
-namespace Gameplay.Managers
+namespace Gameplay.Managers.Note
 {
-    public class RhyTapNoteManager : MonoBehaviour
+    public class RhySlideDownNoteManager : MonoBehaviour
     {
-        public static RhyTapNoteManager Instance { get; private set; }
+        public static RhySlideDownNoteManager Instance { get;private set; }
 
         private void Awake()
         {
             Instance = this;
         }
 
-        public List<RhyTapNote> Taps = new();
+        public List<RhySlideDownNote> Notes = new();
         public float Lanes;
-        public GameObject TapNotePrefab;
+        public GameObject NotePrefab;
         public Transform NoteLayer;
 
         public AudioSource audioSource;
         public AudioClip TapNoteSound;
         public AudioClip TapSuccessSound;
-        public int previewTiming;
-        public int judgeDuration;
+        public int previewTiming = 1000;
+        public int judgeDuration=110;
 
         private void Start()
         {
-            foreach (var t in Taps)
+            foreach (var t in Notes)
             {
                 t.Instantiate();
             }
@@ -47,7 +46,7 @@ namespace Gameplay.Managers
         {
             if (RhyGameplayManager.Instance.IsPlaying)
             {
-                foreach (var t in Taps)
+                foreach (var t in Notes)
                 {
                     if (t.Previewed) continue;
                     int delta = Mathf.Abs(t.Timing - RhyGameplayManager.Instance.ChartTiming);
@@ -62,14 +61,14 @@ namespace Gameplay.Managers
 
         private void UpdateRender()
         {
-            foreach (var t in Taps)
+            foreach (var t in Notes)
             {
                 if (t.Judged)
                 {
                     t.Enable = false;
                     continue;
                 }
-                
+
                 t.Enable = true;
                 t.Position = RhyTimingManager.Instance.CalculatePositionByTiming(t.Timing);
                 float y = Lanes;
@@ -79,21 +78,16 @@ namespace Gameplay.Managers
 
         public void ResetJudgeAndPreview()
         {
-            foreach (var t in Taps)
+            foreach (var t in Notes)
             {
                 t.Judged = false;
                 t.Previewed = false;
             }
         }
 
-        protected virtual bool TryJudge()
-        {
-            return RhyGameplayManager.Instance.IsPlaying&& Input.GetKeyDown(KeyCode.Space);
-        }
-
         private bool JudgeTapNote()
         {
-            foreach (var t in Taps)
+            foreach (var t in Notes)
             {
                 if (t.Judged) continue;
                 float currentTime = RhyGameplayManager.Instance.ChartTiming;
@@ -103,7 +97,13 @@ namespace Gameplay.Managers
                     audioSource.PlayOneShot(TapSuccessSound);
                 }
             }
+
             return true;
+        }
+
+        private bool TryJudge()
+        {
+            return RhyGameplayManager.Instance.IsPlaying && InputManager.Instance.CheckSlideDown();
         }
     }
 }

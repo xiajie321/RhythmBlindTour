@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Gameplay.Managers;
 using Gameplay.Managers.Note;
 using UnityEngine;
@@ -7,6 +8,12 @@ namespace Gameplay.Chart
 {
     public class RhyChart
     {
+        public int AudioOffset;
+        public List<RhyTapNote> TapNotes = new();
+        public List<RhySlideLeftNote> SlideLeftNotes = new();
+        public List<RhySlideRightNote> SlideRightNotes = new();
+        public List<RhySlideUpNote> SlideUpNotes = new();
+        public List<RhySlideDownNote> SlideDownNotes = new();
     }
 
     [Serializable]

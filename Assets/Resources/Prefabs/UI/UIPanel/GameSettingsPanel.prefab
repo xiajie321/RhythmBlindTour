@@ -2532,14 +2532,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isShow: 0
   musicVolume: {fileID: 2025090134780898614}
-  tipSoundVolume: {fileID: 0}
-  intervalSoundVolume: {fileID: 0}
-  readerVolume: {fileID: 0}
+  tipSoundVolume: {fileID: 5690529618597663340}
+  intervalSoundVolume: {fileID: 4889385616623787622}
+  readerVolume: {fileID: 5662949565599810658}
   musicVolumeText: {fileID: 4308104572533564145}
-  tipSoundVolumeText: {fileID: 0}
-  intervalSoundVolumeText: {fileID: 0}
-  readerVolumeText: {fileID: 0}
-  backBtn: {fileID: 0}
+  tipSoundVolumeText: {fileID: 5975864426852872708}
+  intervalSoundVolumeText: {fileID: 2872176354636316204}
+  readerVolumeText: {fileID: 7748063682548261397}
+  backBtn: {fileID: 4020225726716268508}
 --- !u!1 &8493144761821017881
 GameObject:
   m_ObjectHideFlags: 0
@@ -3300,6 +3300,10 @@ PrefabInstance:
       propertyPath: m_text
       value: "\u9000\u51FA"
       objectReference: {fileID: 0}
+    - target: {fileID: 2157915687036631802, guid: 85f1af9c7209fbc4b8eaf2ddc6d70948, type: 3}
+      propertyPath: startWithFocus
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2733020236054153909, guid: 85f1af9c7209fbc4b8eaf2ddc6d70948, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -3398,6 +3402,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 2733020236054153909, guid: 85f1af9c7209fbc4b8eaf2ddc6d70948, type: 3}
   m_PrefabInstance: {fileID: 3042393881955071270}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &4020225726716268508 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2157915687036631802, guid: 85f1af9c7209fbc4b8eaf2ddc6d70948, type: 3}
+  m_PrefabInstance: {fileID: 3042393881955071270}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 84cde16ffa1c4ceaa0aa43767a4b69f3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &4326667631194558528
 PrefabInstance:
   m_ObjectHideFlags: 0

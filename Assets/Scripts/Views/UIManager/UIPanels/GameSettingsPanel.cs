@@ -2,6 +2,7 @@ using System.Globalization;
 using Qf.Models;
 using QFramework;
 using TMPro;
+using UI;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
@@ -19,7 +20,7 @@ namespace Views.UIManager.UIPanels
         public TMP_Text intervalSoundVolumeText;
         public TMP_Text readerVolumeText;
         
-        public EventTrigger backBtn;
+        public Block backBtn;
         protected override void Init()
         {
             var model = this.GetModel<GameSettingModel>();
@@ -48,7 +49,7 @@ namespace Views.UIManager.UIPanels
                 model.readerVolume = v;
             });
             
-            backBtn.AddListener((data) =>
+            backBtn.OnClick+=(() =>
             {
                 UIManager.Instance.HidePanel<GameSettingsPanel>();
                 UIManager.Instance.ShowPanel<MainPanel>();

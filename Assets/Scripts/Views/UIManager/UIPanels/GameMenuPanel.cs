@@ -1,43 +1,38 @@
+using UI;
 using UnityEngine.EventSystems;
 
 namespace Views.UIManager.UIPanels
 {
     public class GameMenuPanel : BasePanel
     {
-        public EventTrigger continueBtn;
-        public EventTrigger backBtn;
-        public EventTrigger skipBtn;
-        public EventTrigger offsetTestBtn;
-        public EventTrigger settingsBtn;
-        public EventTrigger quitBtn;
-        
+        public Block continueBtn;
+        public Block backBtn;
+        public Block skipBtn;
+        public Block offsetTestBtn;
+        public Block settingsBtn;
+        public Block quitBtn;
+
         protected override void Init()
         {
-            continueBtn.AddListener(() =>
-            {
-                UIManager.Instance.HidePanel<GameMenuPanel>();
-            });
-            
-            backBtn.AddListener(() =>
+            continueBtn.OnClick += () => { UIManager.Instance.HidePanel<GameMenuPanel>(); };
+
+            backBtn.OnClick += () =>
             {
                 UIManager.Instance.ShowPanel<LevelSelectionPanel>();
                 UIManager.Instance.HidePanel<GameMenuPanel>();
-            });
-            
-            offsetTestBtn.AddListener((data) =>
+            };
+
+            offsetTestBtn.OnClick += () =>
             {
                 UIManager.Instance.ShowPanel<OffsetTestPanel>();
                 UIManager.Instance.HidePanel<GameMenuPanel>();
-            });
-            settingsBtn.AddListener((data) =>
+            };
+            settingsBtn.OnClick += () =>
             {
                 UIManager.Instance.ShowPanel<GameSettingsPanel>();
                 UIManager.Instance.HidePanel<GameMenuPanel>();
-            });
-            quitBtn.AddListener((data) =>
-            {
-                UIManager.Instance.ShowPanel<ConfirmQuitPanel>();
-            });
+            };
+            quitBtn.OnClick += () => { UIManager.Instance.ShowPanel<ConfirmQuitPanel>(); };
         }
     }
 }

@@ -34,7 +34,7 @@ namespace Gameplay
         }
 
         //相对于音频片段开始的时间
-        private double AudioTimingWithoutGlobalOffset
+        public double AudioTimingWithoutGlobalOffset
         {
             get => audioTiming + GlobalAudioOffset / 1000f;
             set => audioTiming = value - GlobalAudioOffset / 1000f;

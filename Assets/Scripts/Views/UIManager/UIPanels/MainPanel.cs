@@ -1,3 +1,4 @@
+using UI;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
@@ -5,31 +6,28 @@ namespace Views.UIManager.UIPanels
 {
     public class MainPanel : BasePanel
     {
-        public EventTrigger startBtn;
-        public EventTrigger quitBtn;
-        public EventTrigger offsetTestBtn;
-        public EventTrigger settingsBtn;
-        public EventTrigger listBtn;
+        public Block startBtn;
+        public Block quitBtn;
+        public Block offsetTestBtn;
+        public Block settingsBtn;
+        public Block listBtn;
 
         protected override void Init()
         {
-            startBtn.AddListener((data) =>
+            startBtn.OnClick += (() =>
             {
                 UIManager.Instance.ShowPanel<LevelSelectionPanel>();
                 UIManager.Instance.HidePanel<MainPanel>();
             });
 
-            quitBtn.AddListener((data) =>
-            {
-                UIManager.Instance.ShowPanel<ConfirmQuitPanel>();
-            });
+            quitBtn.OnClick += (() => { UIManager.Instance.ShowPanel<ConfirmQuitPanel>(); });
 
-            offsetTestBtn.AddListener((data) =>
+            offsetTestBtn.OnClick += (() =>
             {
                 UIManager.Instance.ShowPanel<OffsetTestPanel>();
                 UIManager.Instance.HidePanel<MainPanel>();
             });
-            settingsBtn.AddListener((data) =>
+            settingsBtn.OnClick += (() =>
             {
                 UIManager.Instance.ShowPanel<GameSettingsPanel>();
                 UIManager.Instance.HidePanel<MainPanel>();

@@ -59,7 +59,7 @@ namespace TestOffset
         {
             if (isPlaying)
             {
-                if (Input.GetKeyDown(KeyCode.Space))
+                if (Input.GetKeyDown(KeyCode.W))
                 {
                     double input = AudioSettings.dspTime - startTime;
                     input %= 2;

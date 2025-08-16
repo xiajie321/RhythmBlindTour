@@ -47,7 +47,6 @@ public class InputManager : MonoBehaviour
 
     public bool CheckSlideUp()
     {
-        Debug.Log(CheckSlide());
         return CheckSlide() == new Vector2Int(0, 1) || inputMap.Gameplay.Up.WasPressedThisFrame();
     }
 

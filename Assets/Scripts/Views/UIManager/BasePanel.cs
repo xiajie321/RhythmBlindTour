@@ -1,4 +1,5 @@
 using System;
+using UI;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -42,7 +43,7 @@ namespace Views.UIManager
             }
         }
 
-        public virtual  void ShowMe()
+        public virtual void ShowMe()
         {
             canvasGroup.alpha = 0;
             isShow = true;
@@ -50,7 +51,7 @@ namespace Views.UIManager
 
         public virtual void HideMe(UnityAction callback)
         {
-            canvasGroup.alpha= 1;
+            canvasGroup.alpha = 1;
             isShow = false;
             hideCallback = callback;
         }

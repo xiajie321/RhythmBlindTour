@@ -119,27 +119,27 @@ namespace UI
             }
         }
 
-        private void OnLeftInput(InputAction.CallbackContext context)
+        protected virtual void OnLeftInput(InputAction.CallbackContext context)
         {
             ChangeTo(left);
         }
 
-        private void OnRightInput(InputAction.CallbackContext context)
+        protected virtual void OnRightInput(InputAction.CallbackContext context)
         {
             ChangeTo(right);
         }
 
-        private void OnUpInput(InputAction.CallbackContext context)
+        protected virtual void OnUpInput(InputAction.CallbackContext context)
         {
             ChangeTo(up);
         }
 
-        private void OnDownInput(InputAction.CallbackContext context)
+        protected virtual void OnDownInput(InputAction.CallbackContext context)
         {
             ChangeTo(down);
         }
 
-        private void ChangeTo(BaseSelectable target)
+        protected void ChangeTo(BaseSelectable target)
         {
             if (target != null)
             {
@@ -152,7 +152,8 @@ namespace UI
                 PushFocus(target);
             }
         }
-        private void OnTapInput(InputAction.CallbackContext obj)
+
+        protected virtual void OnTapInput(InputAction.CallbackContext obj)
         {
             OnClick?.Invoke();
         }

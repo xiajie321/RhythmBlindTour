@@ -130,10 +130,10 @@ namespace Gameplay
             RhySlideDownNoteManager.Instance.ResetJudgeAndPreview();
         }
 
-        public void LoadChart()
+        public void LoadChart(string s="test")
         {
             chart = new();
-            chart = JsonMgr.Instance.LoadData<RhyChart>("test");
+            chart = JsonMgr.Instance.LoadData<RhyChart>(s);
             RhyTapNoteManager.Instance.Taps = chart.TapNotes;
             RhyTapNoteManager.Instance.Init();
         }

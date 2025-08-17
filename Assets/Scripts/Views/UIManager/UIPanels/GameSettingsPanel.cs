@@ -3,6 +3,7 @@ using Qf.Models;
 using QFramework;
 using TMPro;
 using UI;
+using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
@@ -27,25 +28,25 @@ namespace Views.UIManager.UIPanels
             musicVolume.onValueChanged.AddListener((v) =>
             {
                 v *= 100;
-                musicVolumeText.text = $"{v:N0}";
+                musicVolumeText.text = Mathf.RoundToInt(v).ToString(CultureInfo.InvariantCulture);
                 model.musicVolume = v;
             });
             tipSoundVolume.onValueChanged.AddListener((v) =>
             {
                 v *= 100;
-                tipSoundVolumeText.text = $"{v:N0}";
+                tipSoundVolumeText.text = Mathf.RoundToInt(v).ToString(CultureInfo.InvariantCulture);
                 model.tipSoundVolume = v;
             });
             intervalSoundVolume.onValueChanged.AddListener((v) =>
             {
                 v *= 100;
-                intervalSoundVolumeText.text = $"{v:N0}";
+                intervalSoundVolumeText.text = Mathf.RoundToInt(v).ToString(CultureInfo.InvariantCulture);
                 model.intervalSoundVolume = v;
             });
             readerVolume.onValueChanged.AddListener((v) =>
             {
                 v *= 100;
-                readerVolumeText.text = $"{v:N0}";
+                readerVolumeText.text = Mathf.RoundToInt(v).ToString(CultureInfo.InvariantCulture);
                 model.readerVolume = v;
             });
             

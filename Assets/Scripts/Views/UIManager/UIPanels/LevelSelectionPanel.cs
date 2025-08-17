@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Gameplay;
 using UI;
 using UnityEngine.EventSystems;
 
@@ -12,13 +13,24 @@ namespace Views.UIManager.UIPanels
         public Block play;
         public Block replay;
 
-        public Block menu;
+        public string[] levelPath;
+        
+        
+        public Block back;
         protected override void Init()
         {
-            menu.OnClick+=(() =>
+            back.OnClick+=(() =>
             {
-                UIManager.Instance.ShowPanel<GameMenuPanel>();
+                UIManager.Instance.ShowPanel<MainPanel>();
             });
+            for (int i = 0; i < levelIndex.Count; i++)
+            {
+                var i1 = i;
+                levelIndex[i].OnClick += () =>
+                {
+                    RhyGameplayManager.Instance.LoadChart(levelPath[i1]);
+                };
+            }
         }
     }
 }

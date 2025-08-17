@@ -927,7 +927,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4238167413489918796}
   m_Layer: 5
-  m_Name: LevelExampleDiagram_01
+  m_Name: GameLevelPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

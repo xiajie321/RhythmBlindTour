@@ -27,12 +27,16 @@ namespace Gameplay.Managers.Note
 
         private void Start()
         {
+            Init();
+        }
+
+        public void Init()
+        {
             foreach (var t in Taps)
             {
                 t.Instantiate();
             }
         }
-
         private void Update()
         {
             PlayPreviewSound();

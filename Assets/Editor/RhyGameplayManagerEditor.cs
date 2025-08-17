@@ -25,5 +25,10 @@ public class RhyGameplayManagerEditor : Editor
             RhyGameplayManager.Instance.Stop();
         }
         GUILayout.EndHorizontal();
+
+        if (GUILayout.Button("LoadChart"))
+        {
+            RhyGameplayManager.Instance.LoadChart();
+        }
     }
 }

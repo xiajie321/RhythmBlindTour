@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
@@ -22,45 +23,34 @@ namespace UI
 
         [SerializeField] private bool startWithFocus = false;
         private bool isFocused = false;
-        private static BaseSelectable currentFocused = null;
-        private static System.Collections.Generic.Stack<BaseSelectable> focusStack = new System.Collections.Generic.Stack<BaseSelectable>();
+        private static Stack<BaseSelectable> focusStack = new Stack<BaseSelectable>();
 
         public bool IsFocused
         {
             get => isFocused;
-            set
+            private set
             {
                 if (isFocused != value)
                 {
+                    isFocused = value;
                     if (value)
                     {
-                        // 取消之前的焦点
-                        if (currentFocused != null && currentFocused != this)
-                        {
-                            currentFocused.IsFocused = false;
-                        }
-                        
-                        // 设置新焦点
-                        currentFocused = this;
-                        isFocused = true;
                         SubscribeToInput();
                         OnEnter?.Invoke();
                     }
                     else
                     {
-                        // 失去焦点
-                        if (currentFocused == this)
-                        {
-                            currentFocused = null;
-                        }
-                        
-                        isFocused = false;
                         UnsubscribeFromInput();
                         OnExit?.Invoke();
                     }
                 }
             }
         }
+
+        /// <summary>
+        /// 获取当前焦点对象（栈顶）
+        /// </summary>
+        public static BaseSelectable CurrentFocus => focusStack.Count > 0 ? focusStack.Peek() : null;
 
         protected virtual void Awake()
         {
@@ -73,15 +63,34 @@ namespace UI
         {
             if (startWithFocus)
             {
-                IsFocused = true;
+                PushFocus(this);
             }
         }
 
         private void OnDestroy()
         {
-            if (currentFocused == this)
+            // 如果当前对象在栈中，移除它
+            if (focusStack.Contains(this))
             {
-                currentFocused = null;
+                var tempStack = new Stack<BaseSelectable>();
+                while (focusStack.Count > 0)
+                {
+                    var item = focusStack.Pop();
+                    if (item != this)
+                    {
+                        tempStack.Push(item);
+                    }
+                }
+                while (tempStack.Count > 0)
+                {
+                    focusStack.Push(tempStack.Pop());
+                }
+                
+                // 如果移除的是栈顶元素，更新焦点状态
+                if (CurrentFocus != null)
+                {
+                    CurrentFocus.IsFocused = true;
+                }
             }
             UnsubscribeFromInput();
         }
@@ -134,7 +143,13 @@ namespace UI
         {
             if (target != null)
             {
-                target.IsFocused = true;
+                // 替换栈顶焦点
+                if (focusStack.Count > 0)
+                {
+                    var currentTop = focusStack.Pop();
+                    currentTop.IsFocused = false;
+                }
+                PushFocus(target);
             }
         }
         private void OnTapInput(InputAction.CallbackContext obj)
@@ -143,60 +158,70 @@ namespace UI
         }
 
         /// <summary>
-        /// 推入焦点栈（当打开二级菜单时调用）
+        /// 推入焦点栈
         /// </summary>
-        /// <param name="newFocus">二级菜单中的焦点对象</param>
+        /// <param name="newFocus">新的焦点对象</param>
         public static void PushFocus(BaseSelectable newFocus)
         {
-            if (currentFocused != null)
+            if (newFocus == null) return;
+
+            // 如果栈不为空，取消当前焦点
+            if (focusStack.Count > 0)
             {
-                focusStack.Push(currentFocused);
-                currentFocused.IsFocused = false;
+                var currentTop = focusStack.Peek();
+                if (currentTop != null)
+                {
+                    currentTop.IsFocused = false;
+                }
             }
-            
-            if (newFocus != null)
-            {
-                newFocus.IsFocused = true;
-            }
+
+            // 推入新焦点并激活
+            focusStack.Push(newFocus);
+            newFocus.IsFocused = true;
         }
 
         /// <summary>
-        /// 弹出焦点栈（当关闭二级菜单时调用）
+        /// 弹出焦点栈
         /// </summary>
         public static void PopFocus()
         {
-            // 清除当前焦点
-            if (currentFocused != null)
-            {
-                currentFocused.IsFocused = false;
-            }
-
-            // 恢复之前的焦点
             if (focusStack.Count > 0)
             {
-                BaseSelectable previousFocus = focusStack.Pop();
-                if (previousFocus != null)
+                // 移除栈顶并取消焦点
+                var currentTop = focusStack.Pop();
+                if (currentTop != null)
                 {
-                    previousFocus.IsFocused = true;
+                    currentTop.IsFocused = false;
+                }
+
+                // 如果栈中还有元素，激活新的栈顶
+                if (focusStack.Count > 0)
+                {
+                    var newTop = focusStack.Peek();
+                    if (newTop != null)
+                    {
+                        newTop.IsFocused = true;
+                    }
                 }
             }
         }
 
         /// <summary>
-        /// 获取当前焦点对象
-        /// </summary>
-        public static BaseSelectable GetCurrentFocus()
-        {
-            return currentFocused;
-        }
-
-        /// <summary>
-        /// 清空焦点栈（在场景切换时调用）
+        /// 清空焦点栈
         /// </summary>
         public static void ClearFocusStack()
         {
+            // 清除当前焦点状态
+            if (focusStack.Count > 0)
+            {
+                var currentTop = focusStack.Peek();
+                if (currentTop != null)
+                {
+                    currentTop.IsFocused = false;
+                }
+            }
+
             focusStack.Clear();
-            currentFocused = null;
         }
 
         protected abstract void SetNormal();

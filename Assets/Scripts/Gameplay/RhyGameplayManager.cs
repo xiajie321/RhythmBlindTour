@@ -1,4 +1,5 @@
 using System;
+using Gameplay.Chart;
 using Gameplay.Managers;
 using Gameplay.Managers.Note;
 using UnityEngine;
@@ -9,6 +10,7 @@ namespace Gameplay
     public class RhyGameplayManager : MonoBehaviour
     {
         public static RhyGameplayManager Instance { get; private set; }
+        public RhyChart chart;
 
         private void Awake()
         {
@@ -127,6 +129,13 @@ namespace Gameplay
             RhySlideUpNoteManager.Instance.ResetJudgeAndPreview();
             RhySlideDownNoteManager.Instance.ResetJudgeAndPreview();
         }
-        
+
+        public void LoadChart()
+        {
+            chart = new();
+            chart = JsonMgr.Instance.LoadData<RhyChart>("test");
+            RhyTapNoteManager.Instance.Taps = chart.TapNotes;
+            RhyTapNoteManager.Instance.Init();
+        }
     }
 }

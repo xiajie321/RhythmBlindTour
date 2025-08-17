@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace Gameplay.Chart
 {
+    [Serializable]
     public class RhyChart
     {
         public int AudioOffset;

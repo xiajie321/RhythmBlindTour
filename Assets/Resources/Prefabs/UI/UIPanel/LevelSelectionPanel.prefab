@@ -1140,6 +1140,14 @@ PrefabInstance:
       propertyPath: m_text
       value: "\u7B2C\u56DB\u5173"
       objectReference: {fileID: 0}
+    - target: {fileID: 2157915687036631802, guid: 85f1af9c7209fbc4b8eaf2ddc6d70948, type: 3}
+      propertyPath: left
+      value: 
+      objectReference: {fileID: 5986213214076071928}
+    - target: {fileID: 2157915687036631802, guid: 85f1af9c7209fbc4b8eaf2ddc6d70948, type: 3}
+      propertyPath: right
+      value: 
+      objectReference: {fileID: 5964719984847473219}
     - target: {fileID: 2733020236054153909, guid: 85f1af9c7209fbc4b8eaf2ddc6d70948, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1502,6 +1510,14 @@ PrefabInstance:
       propertyPath: m_text
       value: "\u7B2C\u4E8C\u5173"
       objectReference: {fileID: 0}
+    - target: {fileID: 2157915687036631802, guid: 85f1af9c7209fbc4b8eaf2ddc6d70948, type: 3}
+      propertyPath: left
+      value: 
+      objectReference: {fileID: 5183906367077433225}
+    - target: {fileID: 2157915687036631802, guid: 85f1af9c7209fbc4b8eaf2ddc6d70948, type: 3}
+      propertyPath: right
+      value: 
+      objectReference: {fileID: 5986213214076071928}
     - target: {fileID: 2733020236054153909, guid: 85f1af9c7209fbc4b8eaf2ddc6d70948, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1862,6 +1878,14 @@ PrefabInstance:
       propertyPath: m_text
       value: "\u7B2C\u4E09\u5173"
       objectReference: {fileID: 0}
+    - target: {fileID: 2157915687036631802, guid: 85f1af9c7209fbc4b8eaf2ddc6d70948, type: 3}
+      propertyPath: left
+      value: 
+      objectReference: {fileID: 381812145691366929}
+    - target: {fileID: 2157915687036631802, guid: 85f1af9c7209fbc4b8eaf2ddc6d70948, type: 3}
+      propertyPath: right
+      value: 
+      objectReference: {fileID: 1967184459032068083}
     - target: {fileID: 2733020236054153909, guid: 85f1af9c7209fbc4b8eaf2ddc6d70948, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1979,6 +2003,10 @@ PrefabInstance:
       propertyPath: m_text
       value: "\u7B2C\u4E94\u5173"
       objectReference: {fileID: 0}
+    - target: {fileID: 2157915687036631802, guid: 85f1af9c7209fbc4b8eaf2ddc6d70948, type: 3}
+      propertyPath: left
+      value: 
+      objectReference: {fileID: 1967184459032068083}
     - target: {fileID: 2733020236054153909, guid: 85f1af9c7209fbc4b8eaf2ddc6d70948, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -2222,6 +2250,10 @@ PrefabInstance:
       propertyPath: m_text
       value: "\u7B2C\u4E00\u5173"
       objectReference: {fileID: 0}
+    - target: {fileID: 2157915687036631802, guid: 85f1af9c7209fbc4b8eaf2ddc6d70948, type: 3}
+      propertyPath: right
+      value: 
+      objectReference: {fileID: 381812145691366929}
     - target: {fileID: 2733020236054153909, guid: 85f1af9c7209fbc4b8eaf2ddc6d70948, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5

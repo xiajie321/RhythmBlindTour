@@ -102,8 +102,8 @@ TextureImporter:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 90
-        height: 48
+        width: 270
+        height: 144
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -121,10 +121,10 @@ TextureImporter:
       name: "\u56FE\u50CF-0008_1_1"
       rect:
         serializedVersion: 2
-        x: 90
+        x: 270
         y: 0
-        width: 90
-        height: 48
+        width: 270
+        height: 144
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -142,10 +142,10 @@ TextureImporter:
       name: "\u56FE\u50CF-0008_1_2"
       rect:
         serializedVersion: 2
-        x: 180
+        x: 540
         y: 0
-        width: 90
-        height: 48
+        width: 270
+        height: 144
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -163,10 +163,10 @@ TextureImporter:
       name: "\u56FE\u50CF-0008_1_3"
       rect:
         serializedVersion: 2
-        x: 270
+        x: 810
         y: 0
-        width: 90
-        height: 48
+        width: 270
+        height: 144
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -184,10 +184,10 @@ TextureImporter:
       name: "\u56FE\u50CF-0008_1_4"
       rect:
         serializedVersion: 2
-        x: 360
+        x: 1080
         y: 0
-        width: 90
-        height: 48
+        width: 270
+        height: 144
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -195,7 +195,7 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: ed6d68c25e522a84981a0bdd5071fd6b
+      spriteID: 3c8b067e165ba9e41be15867e1e1db8c
       internalID: -654166541
       vertices: []
       indices: 

@@ -4,6 +4,7 @@ using Gameplay.Managers;
 using Gameplay.Managers.Note;
 using UnityEngine;
 using UnityEngine.Events;
+using Views.UIManager.UIPanels;
 
 namespace Gameplay
 {
@@ -15,9 +16,6 @@ namespace Gameplay
         private void Awake()
         {
             Instance = this;
-            //Test
-            Length = 10000;
-            //
         }
 
         #region TimeAbout
@@ -102,6 +100,9 @@ namespace Gameplay
             if (AudioTiming > Length)
             {
                 OnMusicEnd.Invoke();
+                Pause();
+                Views.UIManager.UIManager.Instance.ShowPanel<LevelCompletionPanel>();
+                
             }
         }
 
@@ -117,7 +118,7 @@ namespace Gameplay
             RhyAudioManager.Instance.Pause();
         }
 
-        public void Stop()
+        public void Reset()
         {
             IsPlaying = false;
             audioTiming = 0;
@@ -135,7 +136,19 @@ namespace Gameplay
             chart = new();
             chart = JsonMgr.Instance.LoadData<RhyChart>(s);
             RhyTapNoteManager.Instance.Taps = chart.TapNotes;
+            RhySlideLeftNoteManager.Instance.Notes = chart.SlideLeftNotes;
+            RhySlideRightNoteManager.Instance.Notes = chart.SlideRightNotes;
+            RhySlideUpNoteManager.Instance.Notes = chart.SlideUpNotes;
+            RhySlideDownNoteManager.Instance.Notes = chart.SlideDownNotes;
+
             RhyTapNoteManager.Instance.Init();
+            RhySlideLeftNoteManager.Instance.Init();
+            RhySlideRightNoteManager.Instance.Init();
+            RhySlideUpNoteManager.Instance.Init();
+            RhySlideDownNoteManager.Instance.Init();
+
+            Length = 180000;
+            Reset();
         }
     }
 }

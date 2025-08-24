@@ -447,6 +447,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1462378955336487293}
+  - component: {fileID: 7451329952310001337}
   m_Layer: 5
   m_Name: LevelCompletionPanel
   m_TagString: Untagged
@@ -476,6 +477,19 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 1920, y: 1080}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &7451329952310001337
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3178206134091676132}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb7fc2f1aaa45848343f16ea4b0df38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isShow: 0
 --- !u!1 &3712125377735896131
 GameObject:
   m_ObjectHideFlags: 0

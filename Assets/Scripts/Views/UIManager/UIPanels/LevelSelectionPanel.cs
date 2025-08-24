@@ -29,6 +29,7 @@ namespace Views.UIManager.UIPanels
                 levelIndex[i].OnClick += () =>
                 {
                     RhyGameplayManager.Instance.LoadChart(levelPath[i1]);
+                    UIManager.Instance.HidePanel<LevelSelectionPanel>();
                 };
             }
         }

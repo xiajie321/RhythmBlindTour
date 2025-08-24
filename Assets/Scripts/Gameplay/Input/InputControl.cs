@@ -82,6 +82,15 @@ namespace Gameplay.Input
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ESC"",
+                    ""type"": ""Button"",
+                    ""id"": ""85ce3e2a-9fd4-41d0-a9ff-5d35af2b76ba"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -161,6 +170,17 @@ namespace Gameplay.Input
                     ""action"": ""Down"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ef14a370-bb2e-41a0-8366-11d492e0c70e"",
+                    ""path"": ""*/{Cancel}"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ESC"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -175,6 +195,7 @@ namespace Gameplay.Input
             m_Gameplay_Left = m_Gameplay.FindAction("Left", throwIfNotFound: true);
             m_Gameplay_Right = m_Gameplay.FindAction("Right", throwIfNotFound: true);
             m_Gameplay_Down = m_Gameplay.FindAction("Down", throwIfNotFound: true);
+            m_Gameplay_ESC = m_Gameplay.FindAction("ESC", throwIfNotFound: true);
         }
 
         ~@InputControl()
@@ -247,6 +268,7 @@ namespace Gameplay.Input
         private readonly InputAction m_Gameplay_Left;
         private readonly InputAction m_Gameplay_Right;
         private readonly InputAction m_Gameplay_Down;
+        private readonly InputAction m_Gameplay_ESC;
         public struct GameplayActions
         {
             private @InputControl m_Wrapper;
@@ -257,6 +279,7 @@ namespace Gameplay.Input
             public InputAction @Left => m_Wrapper.m_Gameplay_Left;
             public InputAction @Right => m_Wrapper.m_Gameplay_Right;
             public InputAction @Down => m_Wrapper.m_Gameplay_Down;
+            public InputAction @ESC => m_Wrapper.m_Gameplay_ESC;
             public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
             public void Enable() { Get().Enable(); }
             public void Disable() { Get().Disable(); }
@@ -284,6 +307,9 @@ namespace Gameplay.Input
                 @Down.started += instance.OnDown;
                 @Down.performed += instance.OnDown;
                 @Down.canceled += instance.OnDown;
+                @ESC.started += instance.OnESC;
+                @ESC.performed += instance.OnESC;
+                @ESC.canceled += instance.OnESC;
             }
 
             private void UnregisterCallbacks(IGameplayActions instance)
@@ -306,6 +332,9 @@ namespace Gameplay.Input
                 @Down.started -= instance.OnDown;
                 @Down.performed -= instance.OnDown;
                 @Down.canceled -= instance.OnDown;
+                @ESC.started -= instance.OnESC;
+                @ESC.performed -= instance.OnESC;
+                @ESC.canceled -= instance.OnESC;
             }
 
             public void RemoveCallbacks(IGameplayActions instance)
@@ -331,6 +360,7 @@ namespace Gameplay.Input
             void OnLeft(InputAction.CallbackContext context);
             void OnRight(InputAction.CallbackContext context);
             void OnDown(InputAction.CallbackContext context);
+            void OnESC(InputAction.CallbackContext context);
         }
     }
 }

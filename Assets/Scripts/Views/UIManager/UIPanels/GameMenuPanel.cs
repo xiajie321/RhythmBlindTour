@@ -1,3 +1,4 @@
+using Gameplay;
 using UI;
 using UnityEngine.EventSystems;
 
@@ -14,7 +15,11 @@ namespace Views.UIManager.UIPanels
 
         protected override void Init()
         {
-            continueBtn.OnClick += () => { UIManager.Instance.HidePanel<GameMenuPanel>(); };
+            continueBtn.OnClick += () =>
+            {
+                UIManager.Instance.HidePanel<GameMenuPanel>();
+                RhyGameplayManager.Instance.Play();
+            };
 
             backBtn.OnClick += () =>
             {
@@ -32,7 +37,10 @@ namespace Views.UIManager.UIPanels
                 UIManager.Instance.ShowPanel<GameSettingsPanel>();
                 UIManager.Instance.HidePanel<GameMenuPanel>();
             };
-            quitBtn.OnClick += () => { UIManager.Instance.ShowPanel<ConfirmQuitPanel>(); };
+            quitBtn.OnClick += () =>
+            {
+                UIManager.Instance.ShowPanel<ConfirmQuitPanel>();
+            };
         }
     }
 }

@@ -20,9 +20,9 @@ public class RhyGameplayManagerEditor : Editor
             RhyGameplayManager.Instance.Pause();
         }
 
-        if (GUILayout.Button("Stop"))
+        if (GUILayout.Button("Reset"))
         {
-            RhyGameplayManager.Instance.Stop();
+            RhyGameplayManager.Instance.Reset();
         }
         GUILayout.EndHorizontal();
 

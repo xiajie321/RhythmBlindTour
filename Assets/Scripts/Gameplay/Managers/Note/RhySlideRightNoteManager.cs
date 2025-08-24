@@ -24,7 +24,7 @@ namespace Gameplay.Managers.Note
         public int previewTiming = 1000;
         public int judgeDuration = 110;
 
-        private void Start()
+        public void Init()
         {
             foreach (var t in Notes)
             {

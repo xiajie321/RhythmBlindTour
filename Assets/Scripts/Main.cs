@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Views.UIManager.UIPanels;
 
 public class Main : MonoBehaviour
@@ -7,5 +8,7 @@ public class Main : MonoBehaviour
     void Start()
     {
         Views.UIManager.UIManager.Instance.ShowPanel<MainPanel>();
+        SceneManager.LoadSceneAsync("Level One",LoadSceneMode.Additive);
     }
+    
 }

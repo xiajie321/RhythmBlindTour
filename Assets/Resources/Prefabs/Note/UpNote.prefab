@@ -10,7 +10,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3798853925332687857, guid: 46aaf2bdaa53eb144b3096368948b781, type: 3}
       propertyPath: m_Name
-      value: TapNote Variant
+      value: UpNote
       objectReference: {fileID: 0}
     - target: {fileID: 6375826007240795388, guid: 46aaf2bdaa53eb144b3096368948b781, type: 3}
       propertyPath: m_LocalPosition.x
@@ -55,7 +55,11 @@ PrefabInstance:
     - target: {fileID: 7127420901586530867, guid: 46aaf2bdaa53eb144b3096368948b781, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: -1634149353, guid: bcc7605859c7bdf4e85b319007bc58f9, type: 3}
+      objectReference: {fileID: 21300000, guid: 367a55d12d4e0d5499c36aa2d57469b5, type: 3}
+    - target: {fileID: 7127420901586530867, guid: 46aaf2bdaa53eb144b3096368948b781, type: 3}
+      propertyPath: m_MaskInteraction
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

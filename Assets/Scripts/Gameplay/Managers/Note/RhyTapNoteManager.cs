@@ -32,6 +32,17 @@ namespace Gameplay.Managers.Note
 
         public void Init()
         {
+            List<GameObject> children = new List<GameObject>();
+            
+            foreach (Transform child in NoteLayer.transform)
+            {
+                children.Add(child.gameObject);
+            }
+            
+            foreach (GameObject child in children)
+            {
+                Destroy(child);
+            }
             foreach (var t in Taps)
             {
                 t.Instantiate();

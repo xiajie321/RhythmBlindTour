@@ -132,7 +132,7 @@ namespace RhythmTool
         }
 
         /// <summary>
-        /// Stop playing the AudioClip.
+        /// Reset playing the AudioClip.
         /// </summary>
         public void Stop()
         {

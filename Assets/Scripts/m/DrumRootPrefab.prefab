@@ -114,6 +114,7 @@ MonoBehaviour:
   IsTip: 0
   DrumCode: 
   PreviewAudioSource: {fileID: 0}
+  PrefabType: 0
 --- !u!114 &6294270803941274552
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -206,12 +207,13 @@ MonoBehaviour:
   image: {fileID: 3873527721639667189}
   startBarImage: {fileID: 1953861042112417776}
   endBarImage: {fileID: 0}
-  specialSprite: {fileID: 0}
+  specialSprite: {fileID: -2413806693520163455, guid: 90f937ebaa99040a99d8f92dd5759a24, type: 3}
   ThisTime: 0
   Index: 0
   IsTip: 1
   DrumCode: 
   PreviewAudioSource: {fileID: 0}
+  PrefabType: 0
 --- !u!114 &3873527721639667189
 MonoBehaviour:
   m_ObjectHideFlags: 0

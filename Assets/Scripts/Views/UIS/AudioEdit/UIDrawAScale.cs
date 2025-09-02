@@ -3,6 +3,7 @@ using Qf.Events;
 using Qf.Models.AudioEdit;
 using QFramework;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,6 +13,12 @@ using UnityEngine.Events;
 /// <summary>
 /// 25/07/09 - mixyao
 /// 节拍点击与便捷跳转均统一触发点击事件；节拍自动到达事件仅自动播放时触发
+/// 25/08/08 - patch
+/// - 监听 AudioEditModelLoad 以确保从 Level / SO 注入后也会重建
+/// - Start 时自检一次（等待 Model/Clip/BPM/拍号就绪）
+/// - 修正 measureDuration 计算，严格支持分母：60/BPM*(4/BeatB)
+/// 25/08/10 - patch2
+/// - 新增参数变更观察器：BPM/BeatA/BeatB/Clip 任一变化时自动重建刻度
 /// </summary>
 public class UIDrawAScale : MonoBehaviour, IController
 {
@@ -65,13 +72,71 @@ public class UIDrawAScale : MonoBehaviour, IController
     int _PixelUnitsPerSecond = AudioEditConfig.PixelUnitsPerSecond;
     float scaleHeight = 80f;
 
+    // —— 变更观察缓存 —— //
+    int lastBPM = -1;
+    int lastBeatA = -1;
+    int lastBeatB = -1;
+    AudioClip lastClip = null;
+
     void Start()
     {
         editModel = this.GetModel<AudioEditModel>();
-        this.RegisterEvent<BPMChangeValue>(v =>
+
+        // A) 监听 BPM 改变 → 重建
+        this.RegisterEvent<BPMChangeValue>(_ => GenerateScales())
+            .UnRegisterWhenGameObjectDestroyed(gameObject);
+
+        // B) 监听“加载完成” → 从 Level/SO 注入后重建
+        this.RegisterEvent<AudioEditModelLoad>(_ => GenerateScales())
+            .UnRegisterWhenGameObjectDestroyed(gameObject);
+
+        // C) 启动后自检一次（避免错过事件）
+        StartCoroutine(TryBuildOnceWhenReady());
+
+        // D) 开启变更观察（BeatA/BeatB 在模型中是普通 int，不会自动发事件）
+        StartCoroutine(WatchParamsChanges());
+    }
+
+    IEnumerator TryBuildOnceWhenReady()
+    {
+        // 等到模型和音频准备好 & BPM/拍号有效
+        yield return new WaitUntil(() =>
+            editModel != null &&
+            editModel.EditAudioClip != null &&
+            editModel.BPM > 0 &&
+            editModel.BeatA > 0 &&
+            editModel.BeatB > 0 &&
+            progressBar != null);
+
+        GenerateScales();
+    }
+
+    IEnumerator WatchParamsChanges()
+    {
+        // 小开销轮询：每帧/隔帧都行，这里每帧最简单
+        while (true)
         {
-            GenerateScales();
-        }).UnRegisterWhenGameObjectDestroyed(gameObject);
+            if (editModel != null)
+            {
+                var curClip = editModel.EditAudioClip;
+                var curBPM = editModel.BPM;
+                var curA = editModel.BeatA;
+                var curB = editModel.BeatB;
+
+                if (curClip != lastClip || curBPM != lastBPM || curA != lastBeatA || curB != lastBeatB)
+                {
+                    lastClip = curClip;
+                    lastBPM = curBPM;
+                    lastBeatA = curA;
+                    lastBeatB = curB;
+
+                    // 前置条件都满足时才重建
+                    if (curClip != null && curBPM > 0 && curA > 0 && curB > 0 && progressBar != null)
+                        GenerateScales();
+                }
+            }
+            yield return null;
+        }
     }
 
     void ClearAll()
@@ -88,14 +153,17 @@ public class UIDrawAScale : MonoBehaviour, IController
 
     public void GenerateScales()
     {
-        if (editModel.EditAudioClip == null || editModel.BPM <= 0) return;
+        if (editModel == null || progressBar == null) return;
+        if (editModel.EditAudioClip == null) return;
+        if (editModel.BPM <= 0 || editModel.BeatA <= 0 || editModel.BeatB <= 0) return;
 
         ClearAll();
 
-        int beatA = editModel.BeatA;
-        int beatB = editModel.BeatB;
-        float beatDuration = 60f / editModel.BPM;
-        float measureDuration = beatDuration * beatB;
+        int beatA = editModel.BeatA;   // 每小节拍数（分子）
+        int beatB = editModel.BeatB;   // 拍单位（分母：4=四分、8=八分…）
+        // 更严谨：一拍时长要乘以 (4 / beatB)，确保 3/8、7/16 等拍号正确
+        float beatDuration = 60f / editModel.BPM * (4f / beatB);
+        float measureDuration = beatDuration * beatA; // 一小节 = beatA 个拍
         float audioLength = editModel.EditAudioClip.length;
         float bpm = editModel.BPM;
 
@@ -122,7 +190,9 @@ public class UIDrawAScale : MonoBehaviour, IController
         }
 
         UpdateCurrentIndexToNearest(editModel.ThisTime);
+        this.SendEvent(new OnScaleBuilt { TotalBeats = beatInfoList.Count });
     }
+    public struct OnScaleBuilt { public int TotalBeats; }
 
     void CreateMeasureBG(float time, float duration, Color color)
     {
@@ -308,7 +378,6 @@ public class UIDrawAScale : MonoBehaviour, IController
         }
     }
 
-
     // 便捷移动/跳转方法全部用统一逻辑
 
     public void NextBeat()
@@ -378,7 +447,6 @@ public class UIDrawAScale : MonoBehaviour, IController
             if (beatInfoList[currentBeatIndex].BeatInMeasure != 0)
             {
                 // 本小节归位
-                // 找到当前小节开头
                 for (int i = currentBeatIndex; i >= 0; i--)
                 {
                     if (beatInfoList[i].MeasureIndex == currentMeasure && beatInfoList[i].BeatInMeasure == 0)
@@ -429,24 +497,23 @@ public class UIDrawAScale : MonoBehaviour, IController
         }
     }
 
-
     public void MoveNextBeat()
     {
-        float beatDuration = 60f / editModel.BPM;
+        float beatDuration = 60f / editModel.BPM * (4f / editModel.BeatB);
         float newTime = editModel.ThisTime + beatDuration;
         this.SendCommand(new SetAudioEditThisTimeCommand(newTime));
     }
 
     public void MovePrevBeat()
     {
-        float beatDuration = 60f / editModel.BPM;
+        float beatDuration = 60f / editModel.BPM * (4f / editModel.BeatB);
         float newTime = Mathf.Max(0f, editModel.ThisTime - beatDuration);
         this.SendCommand(new SetAudioEditThisTimeCommand(newTime));
     }
 
     public void MoveNextMeasure()
     {
-        float beatDuration = 60f / editModel.BPM;
+        float beatDuration = 60f / editModel.BPM * (4f / editModel.BeatB);
         float measureDuration = beatDuration * editModel.BeatA;
         float newTime = editModel.ThisTime + measureDuration;
         this.SendCommand(new SetAudioEditThisTimeCommand(newTime));
@@ -454,14 +521,11 @@ public class UIDrawAScale : MonoBehaviour, IController
 
     public void MovePrevMeasure()
     {
-        float beatDuration = 60f / editModel.BPM;
+        float beatDuration = 60f / editModel.BPM * (4f / editModel.BeatB);
         float measureDuration = beatDuration * editModel.BeatA;
         float newTime = Mathf.Max(0f, editModel.ThisTime - measureDuration);
         this.SendCommand(new SetAudioEditThisTimeCommand(newTime));
     }
 
-    public IArchitecture GetArchitecture()
-    {
-        return GameBody.Interface;
-    }
+    public IArchitecture GetArchitecture() => GameBody.Interface;
 }

@@ -12,6 +12,7 @@ using Qf.Events;
 using Qf.Managers;
 using Qf.Models;
 using System.Linq;
+using System.Globalization;
 
 public class mUIDrumsInspectorPanel : MonoBehaviour, IController
 {
@@ -29,6 +30,13 @@ public class mUIDrumsInspectorPanel : MonoBehaviour, IController
     public SortMode currentPrimaryMode = SortMode.ByIndex;
     public bool typeSortEnabled = false;
 
+    // 脱离选中模式：不自动回选、不高亮
+    private bool _noSelectionMode = false;
+    // 用于拍点落在边界时，向右推进一点点，避免 1.00 被判成上一个拍
+    [SerializeField] private float boundaryEpsilonSec = 1e-4f;
+    [SerializeField] private bool _navigateByTip = false; // true: 用Tip；false: 用Center
+
+
     void Start()
     {
         StartCoroutine(InitEditModelIfNeeded());
@@ -38,6 +46,14 @@ public class mUIDrumsInspectorPanel : MonoBehaviour, IController
         // 监听鼓点唯一高亮事件
         this.RegisterEvent<UIAudioEditDrumsOrbit.OnSelectDrumByCode>(OnDrumCodeSelected)
             .UnRegisterWhenGameObjectDestroyed(gameObject);
+
+
+        // ★ 监听“导航锚点模式”变更（来自 Orbit）
+        this.RegisterEvent<UIAudioEditDrumsOrbit.OnPlacementNavigationModeChanged>(e =>
+        {
+            _navigateByTip = e.UseTipForNavigation;
+        }).UnRegisterWhenGameObjectDestroyed(gameObject);
+
     }
 
     IEnumerator InitEditModelIfNeeded()
@@ -66,9 +82,19 @@ public class mUIDrumsInspectorPanel : MonoBehaviour, IController
     public void RefreshList()
     {
         if (AudioEditManager.Instance != null && AudioEditManager.Instance.IsControlRunning) return;
-        if (ItemPrefab == null || ContentRoot == null || editModel == null)
+        if (ItemPrefab == null)
         {
-            Debug.LogError("[mUIDrumsInspectorPanel] 组件未就绪，刷新失败");
+            Debug.LogError("[ItemPrefab] 组件未就绪，刷新失败");
+            return;
+        }
+        if (ContentRoot == null)
+        {
+            Debug.LogError("[ContentRoot] 组件未就绪，刷新失败");
+            return;
+        }
+        if (editModel == null)
+        {
+            Debug.LogError("[editModel] 组件未就绪，刷新失败");
             return;
         }
         foreach (var row in rows) Destroy(row.GameObject);
@@ -152,6 +178,7 @@ public class mUIDrumsInspectorPanel : MonoBehaviour, IController
                 if (timeHand != null)
                     timeHand.SetTime(roundedTime, true);
 
+                _noSelectionMode = false;   // ← 点任何行＝重新进入“可选中”模式
                 selectedDrumCode = drumCode;
                 GameBody.Interface.SendEvent(new UIAudioEditDrumsOrbit.OnSelectDrumByCode() { DrumCode = drumCode });
                 OnTimeNeedCheck(new OnUpdateThisTime() { ThisTime = roundedTime });
@@ -165,7 +192,11 @@ public class mUIDrumsInspectorPanel : MonoBehaviour, IController
         {
             OnTimeNeedCheck(new OnUpdateThisTime() { ThisTime = editModel.ThisTime });
         }
+        this.SendEvent(new OnInspectorListReady());
+
     }
+    public struct OnInspectorListReady { }
+
 
     // 只高亮唯一 DrumCode 条目
     void OnTimeNeedCheck(OnUpdateThisTime evt)
@@ -174,7 +205,7 @@ public class mUIDrumsInspectorPanel : MonoBehaviour, IController
 
         string currentTime = evt.ThisTime.ToString("0.00");
         // 仅在未选中情况下自动选一个（用于首次高亮），不再发事件
-        if (string.IsNullOrEmpty(selectedDrumCode))
+        if (string.IsNullOrEmpty(selectedDrumCode) && !_noSelectionMode)
         {
             var drumRows = rows.Where(r => r.GetTimeTextValue() == currentTime).ToList();
             if (drumRows.Any())
@@ -195,6 +226,7 @@ public class mUIDrumsInspectorPanel : MonoBehaviour, IController
     // 监听唯一高亮事件
     private void OnDrumCodeSelected(UIAudioEditDrumsOrbit.OnSelectDrumByCode evt)
     {
+        if (_noSelectionMode) return;  // ← 在“脱离模式”里忽略任何外部选中事件
         if (selectedDrumCode == evt.DrumCode) return;
         selectedDrumCode = evt.DrumCode;
         DecodeDrumCode(selectedDrumCode, out float selectTime, out int typeIndex);
@@ -355,102 +387,113 @@ public class mUIDrumsInspectorPanel : MonoBehaviour, IController
 
     public void MoveToNearestDrum()
     {
-        if (editModel == null || editModel.TimeLineData == null || editModel.TimeLineData.Count == 0)
-            return;
+        if (editModel == null) return;
+        var items = BuildNavItems();
+        if (items.Count == 0) return;
 
         float now = (float)Math.Round(editModel.ThisTime, 2);
-        float? nearest = null;
+        NavItem? best = null;
+        float bestDist = float.MaxValue;
 
-        foreach (var time in editModel.TimeLineData.Keys)
+        foreach (var it in items)
         {
-            float roundedTime = (float)Math.Round(time, 2);
-            if (nearest == null || Mathf.Abs(roundedTime - now) < Mathf.Abs(nearest.Value - now))
-            {
-                nearest = roundedTime;
-            }
+            float t = (float)Math.Round(_navigateByTip ? it.Tip : it.Center, 2);
+            float dist = Mathf.Abs(t - now);
+            if (dist < bestDist) { bestDist = dist; best = it; }
         }
+        if (!best.HasValue) return;
 
-        if (nearest.HasValue)
-        {
-            var timeHand = GameObject.FindObjectOfType<UIAudioEditTimeHand>();
-            if (timeHand != null)
-            {
-                timeHand.SetTime(nearest.Value, true);
-                OnTimeNeedCheck(new OnUpdateThisTime() { ThisTime = nearest.Value });
-                TriggerCurrentRowClick(nearest.Value);
-                TryPreviewSucceedSound(selectedDrumCode);
+        float target = (float)Math.Round(_navigateByTip ? best.Value.Tip : best.Value.Center, 2);
 
-            }
-        }
+        var timeHand = GameObject.FindObjectOfType<UIAudioEditTimeHand>();
+        if (timeHand != null) timeHand.SetTime(target, true);
+        else this.SendEvent(new OnUpdateThisTime { ThisTime = target });
+
+        // 高亮：直接用 DrumCode 唯一事件，不再依赖“时间字符串”匹配行
+        _noSelectionMode = false;
+        selectedDrumCode = best.Value.Code;
+        GameBody.Interface.SendEvent(new UIAudioEditDrumsOrbit.OnSelectDrumByCode { DrumCode = selectedDrumCode });
+
+        TryPreviewSucceedSound(selectedDrumCode);
     }
 
     public void MoveToPreviousDrum()
     {
-        if (editModel == null || editModel.TimeLineData == null || editModel.TimeLineData.Count == 0)
-            return;
+        if (editModel == null) return;
+        var items = BuildNavItems();
+        if (items.Count == 0) return;
 
         float now = (float)Math.Round(editModel.ThisTime, 2);
-        float? previous = null;
 
-        foreach (var time in editModel.TimeLineData.Keys)
-        {
-            float roundedTime = (float)Math.Round(time, 2);
-            if (roundedTime < now && (!previous.HasValue || roundedTime > previous.Value))
+        // 取目标时间并排序
+        var ordered = items
+            .Select(it => new
             {
-                previous = roundedTime;
-            }
-        }
+                t = (float)Math.Round(_navigateByTip ? it.Tip : it.Center, 2),
+                code = it.Code,
+                center = it.Center,
+                tip = it.Tip
+            })
+            .OrderBy(x => x.t)
+            .ToList();
 
-        if (previous.HasValue)
-        {
-            var timeHand = GameObject.FindObjectOfType<UIAudioEditTimeHand>();
-            if (timeHand != null)
-            {
-                timeHand.SetTime(previous.Value, true);
-                OnTimeNeedCheck(new OnUpdateThisTime() { ThisTime = previous.Value });
-                TriggerCurrentRowClick(previous.Value);
-                TryPreviewSucceedSound(selectedDrumCode);
+        // 找到严格小于 now 的最大 t
+        var cand = ordered.Where(x => x.t < now).LastOrDefault();
+        if (cand == null)
+            cand = ordered.LastOrDefault(); // 如果没有更小的，就跳到最后一个（循环式）
 
-            }
-        }
+        if (cand == null) return;
 
+        float target = cand.t;
+        var timeHand = GameObject.FindObjectOfType<UIAudioEditTimeHand>();
+        if (timeHand != null) timeHand.SetTime(target, true);
+        else this.SendEvent(new OnUpdateThisTime { ThisTime = target });
+
+        _noSelectionMode = false;
+        selectedDrumCode = cand.code;
+        GameBody.Interface.SendEvent(new UIAudioEditDrumsOrbit.OnSelectDrumByCode { DrumCode = selectedDrumCode });
+
+        TryPreviewSucceedSound(selectedDrumCode);
     }
 
     public void MoveToNextDrum()
     {
-        if (editModel == null || editModel.TimeLineData == null || editModel.TimeLineData.Count == 0)
-            return;
+        if (editModel == null) return;
+        var items = BuildNavItems();
+        if (items.Count == 0) return;
 
-        var times = editModel.TimeLineData.Keys
-            .Select(t => (float)Math.Round(t, 2, MidpointRounding.ToEven))
-            .Distinct()
-            .OrderBy(t => t)
+        float now = (float)Math.Round(editModel.ThisTime, 2);
+
+        var ordered = items
+            .Select(it => new
+            {
+                t = (float)Math.Round(_navigateByTip ? it.Tip : it.Center, 2),
+                code = it.Code,
+                center = it.Center,
+                tip = it.Tip
+            })
+            .OrderBy(x => x.t)
             .ToList();
 
-        float now = (float)Math.Round(editModel.ThisTime, 2, MidpointRounding.ToEven);
+        // 找到严格大于 now 的最小 t
+        var cand = ordered.FirstOrDefault(x => x.t > now);
+        if (cand == null)
+            cand = ordered.FirstOrDefault(); // 若没有更大的，从头循环
 
-        // 找到第一个严格大于 now 的鼓点时间
-        var next = times.SkipWhile(t => t <= now).FirstOrDefault();
+        if (cand == null) return;
 
-        // 注意 FirstOrDefault 如果找不到是0，要额外判断
-        if (next > 0 || (next == 0 && times.Count > 0 && times[0] > now))
-        {
-            var nextTime = next > now ? next : times.FirstOrDefault(t => t > now);
-            if (nextTime > now)
-            {
-                var timeHand = GameObject.FindObjectOfType<UIAudioEditTimeHand>();
-                if (timeHand != null)
-                {
-                    timeHand.SetTime(nextTime, true);
-                    OnTimeNeedCheck(new OnUpdateThisTime { ThisTime = nextTime });
-                    TriggerCurrentRowClick(nextTime);
-                    TryPreviewSucceedSound(selectedDrumCode);
+        float target = cand.t;
+        var timeHand = GameObject.FindObjectOfType<UIAudioEditTimeHand>();
+        if (timeHand != null) timeHand.SetTime(target, true);
+        else this.SendEvent(new OnUpdateThisTime { ThisTime = target });
 
-                }
-            }
-        }
+        _noSelectionMode = false;
+        selectedDrumCode = cand.code;
+        GameBody.Interface.SendEvent(new UIAudioEditDrumsOrbit.OnSelectDrumByCode { DrumCode = selectedDrumCode });
 
+        TryPreviewSucceedSound(selectedDrumCode);
     }
+
 
 
     // 在同一ThisTime下获取所有鼓点DrumCode和typeIndex
@@ -462,51 +505,96 @@ public class mUIDrumsInspectorPanel : MonoBehaviour, IController
             .ToList();
     }
 
-    // 顺序切换鼓点（下一个）
+    // 顺序切换鼓点（下一个）——按当前导航锚点(_navigateByTip)在“同一时间组”内循环
     public void SelectNextDrumInCurrentTime()
     {
-        string timeStr = editModel.ThisTime.ToString("0.00");
-        var drumList = GetDrumCodesInCurrentTime(timeStr);
+        if (_noSelectionMode || editModel == null) return;
 
-        if (drumList.Count == 0) return;
+        // 当前时间（按 0.00 对齐）
+        float now = (float)Math.Round(editModel.ThisTime, 2);
 
-        var ordered = drumList.OrderBy(d => Array.IndexOf(typeOrder, d.TypeIndex)).ToList();
+        // 用导航锚点构建“同一时间”的分组：Tip 模式按提示点时间分组；Center 模式按判定点时间分组
+        var items = BuildNavItems();
+        var group = items
+            .Select(it =>
+            {
+                float anchor = (float)Math.Round(_navigateByTip ? it.Tip : it.Center, 2);
+                int typeIdxFromCode = 0;
+                if (!string.IsNullOrEmpty(it.Code))
+                {
+                    var last = it.Code[it.Code.Length - 1];
+                    int.TryParse(last.ToString(), out typeIdxFromCode);
+                }
+                return new { code = it.Code, anchor, typeIdx = typeIdxFromCode };
+            })
+            .Where(x => Mathf.Abs(x.anchor - now) <= 1e-3f) // 同一 ThisTime 组
+            .OrderBy(x => Array.IndexOf(typeOrder, x.typeIdx)) // 按你的 typeOrder 排序
+            .ToList();
 
-        int idx = ordered.FindIndex(d => d.DrumCode == selectedDrumCode);
-        int nextIdx = (idx + 1) % ordered.Count;
-        selectedDrumCode = ordered[nextIdx].DrumCode;
+        if (group.Count == 0) return;
 
-        OnTimeNeedCheck(new OnUpdateThisTime { ThisTime = editModel.ThisTime });
+        // 计算下一条（支持当前未选中时从首条开始）
+        int curIdx = group.FindIndex(g => g.code == selectedDrumCode);
+        int nextIdx = (curIdx < 0) ? 0 : (curIdx + 1) % group.Count;
 
-        // 【核心补充】同步 DrumCode 唯一事件
-        GameBody.Interface.SendEvent(new UIAudioEditDrumsOrbit.OnSelectDrumByCode() { DrumCode = selectedDrumCode });
+        selectedDrumCode = group[nextIdx].code;
+
+        // 保守地把时间针对齐到该锚点（一般与 now 相同，避免因四舍五入漂移）
+        float target = group[nextIdx].anchor;
+        var timeHand = GameObject.FindObjectOfType<UIAudioEditTimeHand>();
+        if (timeHand != null) timeHand.SetTime(target, true);
+        else this.SendEvent(new OnUpdateThisTime { ThisTime = target });
+
+        // 刷新高亮 & 广播唯一 DrumCode 事件 & 预览声音
+        OnTimeNeedCheck(new OnUpdateThisTime { ThisTime = target });
+        GameBody.Interface.SendEvent(new UIAudioEditDrumsOrbit.OnSelectDrumByCode { DrumCode = selectedDrumCode });
         TryPreviewSucceedSound(selectedDrumCode);
-
     }
-
-    // 逆序切换鼓点（上一个）
+    // 逆序切换鼓点（上一个）——按当前导航锚点(_navigateByTip)在“同一时间组”内循环
     public void SelectPrevDrumInCurrentTime()
     {
-        string timeStr = editModel.ThisTime.ToString("0.00");
-        var drumList = GetDrumCodesInCurrentTime(timeStr);
+        if (_noSelectionMode || editModel == null) return;
 
-        if (drumList.Count == 0) return;
+        float now = (float)Math.Round(editModel.ThisTime, 2);
 
-        var ordered = drumList.OrderBy(d => Array.IndexOf(typeOrder, d.TypeIndex)).ToList();
+        var items = BuildNavItems();
+        var group = items
+            .Select(it =>
+            {
+                float anchor = (float)Math.Round(_navigateByTip ? it.Tip : it.Center, 2);
+                int typeIdxFromCode = 0;
+                if (!string.IsNullOrEmpty(it.Code))
+                {
+                    var last = it.Code[it.Code.Length - 1];
+                    int.TryParse(last.ToString(), out typeIdxFromCode);
+                }
+                return new { code = it.Code, anchor, typeIdx = typeIdxFromCode };
+            })
+            .Where(x => Mathf.Abs(x.anchor - now) <= 1e-3f)
+            .OrderBy(x => Array.IndexOf(typeOrder, x.typeIdx))
+            .ToList();
 
-        int idx = ordered.FindIndex(d => d.DrumCode == selectedDrumCode);
-        int prevIdx = (idx - 1 + ordered.Count) % ordered.Count;
-        selectedDrumCode = ordered[prevIdx].DrumCode;
+        if (group.Count == 0) return;
 
-        OnTimeNeedCheck(new OnUpdateThisTime { ThisTime = editModel.ThisTime });
+        int curIdx = group.FindIndex(g => g.code == selectedDrumCode);
+        int prevIdx = (curIdx < 0) ? (group.Count - 1) : (curIdx - 1 + group.Count) % group.Count;
 
-        // 【核心补充】同步 DrumCode 唯一事件
-        GameBody.Interface.SendEvent(new UIAudioEditDrumsOrbit.OnSelectDrumByCode() { DrumCode = selectedDrumCode });
+        selectedDrumCode = group[prevIdx].code;
+
+        float target = group[prevIdx].anchor;
+        var timeHand = GameObject.FindObjectOfType<UIAudioEditTimeHand>();
+        if (timeHand != null) timeHand.SetTime(target, true);
+        else this.SendEvent(new OnUpdateThisTime { ThisTime = target });
+
+        OnTimeNeedCheck(new OnUpdateThisTime { ThisTime = target });
+        GameBody.Interface.SendEvent(new UIAudioEditDrumsOrbit.OnSelectDrumByCode { DrumCode = selectedDrumCode });
         TryPreviewSucceedSound(selectedDrumCode);
-
     }
+
     void TriggerCurrentRowClick(float targetTime)
     {
+        if (_noSelectionMode) return;
+
         string timeStr = targetTime.ToString("0.00");
         var drumList = GetDrumCodesInCurrentTime(timeStr);
 
@@ -519,14 +607,22 @@ public class mUIDrumsInspectorPanel : MonoBehaviour, IController
         // #redgin 同步唯一 DrumCode 全局事件（强制让属性面板、Orbit等刷新！）-- 2024-07-14
         GameBody.Interface.SendEvent(new UIAudioEditDrumsOrbit.OnSelectDrumByCode() { DrumCode = selectedDrumCode });
     }
+    // 统一预览：按当前导航锚点(_navigateByTip)选择“提示音/回答音”
     void TryPreviewSucceedSound(string drumCode)
     {
         if (string.IsNullOrEmpty(drumCode)) return;
+
         var editModel = this.GetModel<AudioEditModel>();
         DrumsLoadData drum = UIAttributeSetPanel.FindDrumByCode(editModel, drumCode);
-        if (drum == null) return;
+        if (drum == null || drum.DrwmsData == null) return;
+
+        // ★关键：Tip 导航就播提示音；Center 导航播回答音
+        string clipPath = _navigateByTip
+            ? drum.DrwmsData.FPreAdventAudioClipPath   // 提示音路径
+            : drum.DrwmsData.FSucceedAudioClipPath;    // 回答音路径
+
         var cModel = this.GetModel<DataCachingModel>();
-        var clip = cModel.GetAudioClip(drum.DrwmsData.FSucceedAudioClipPath);
+        var clip = cModel.GetAudioClip(clipPath);
 
         var op = drum.DrwmsData.DtheTypeOfOperation;
         if (clip != null)
@@ -534,9 +630,207 @@ public class mUIDrumsInspectorPanel : MonoBehaviour, IController
     }
 
 
+
     internal void ClearAll()
     {
         RefreshList();
+    }
+    #region TTS for Inspector Rows
+
+    // 朗读循环状态
+    private string _ttsLastTimeStr = null;
+    private int _ttsStep = 0; // 0 -> 数量句；1 -> 类型清单；2 -> 数量句
+
+    // 类型顺序与名称（按你指定的 4,0,1,2,3）
+    private static readonly int[] TTS_ORDER = new[] { 4, 0, 1, 2, 3 };
+    private static readonly Dictionary<int, string> TTS_TYPE_NAME = new()
+{
+    {4, "点击"},
+    {0, "上滑"},
+    {1, "下滑"},
+    {2, "左滑"},
+    {3, "右滑"},
+};
+
+    /// <summary>
+    /// 朗读：无高亮→“ThisTime + 数量 + 类型清单”；有高亮→“CenterTime + 当前选中{类型}”
+    /// 不再做循环步进，仅按当前状态读一条。
+    /// </summary>
+    public void TTS_ReadValue()
+    {
+        if (editModel == null)
+        {
+            try { editModel = this.GetModel<AudioEditModel>(); }
+            catch { return; }
+        }
+
+        // ========== 分支1：有唯一选中（且非“脱离选中模式”） -> 读选中 ==========
+        if (!_noSelectionMode && !string.IsNullOrEmpty(selectedDrumCode))
+        {
+            // 统一以“当前时间(编辑针)”作为朗读时间口径
+            float now = (float)System.Math.Round(editModel.ThisTime, 2);
+            string secText = now.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+
+            string beatText = FormatMeasureBeatText(now, out bool okBeat);
+            if (!okBeat) beatText = string.Empty;
+
+            var drum = UIAttributeSetPanel.FindDrumByCode(editModel, selectedDrumCode);
+            string typeCN = drum != null ? OpToSpeakCN(drum.DrwmsData.DtheTypeOfOperation) : "鼓点";
+
+            // 例：第4小节第1拍，17.00秒，当前选中左滑鼓点
+            string prefix = string.IsNullOrEmpty(beatText) ? $"{secText}秒" : $"{beatText}，{secText}秒";
+            mTTS.Speak($"{prefix}，当前选中{typeCN}");
+            return;
+        }
+
+        // ========== 分支2：无选中 -> 读当前时间的统计 ==========
+        string timeStr = editModel.ThisTime.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+        var drumList = GetDrumCodesInCurrentTime(timeStr);
+        int count = drumList.Count;
+
+        float now2 = (float)System.Math.Round(editModel.ThisTime, 2);
+        string secText2 = now2.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+
+        string beatText2 = FormatMeasureBeatText(now2, out bool okBeat2);
+        if (!okBeat2) beatText2 = string.Empty;
+
+        // 例：第4小节第1拍，17.00秒，当前时间存在1个鼓点
+        string header = string.IsNullOrEmpty(beatText2) ? $"{secText2}秒" : $"{beatText2}，{secText2}秒";
+        mTTS.Speak($"{header}，当前时间存在{count}个鼓点");
+    }
+
+
+    /// <summary>朗读高亮鼓点的详细信息：{类型}，判定点{ThisTime}秒，提示点{Tip}秒。</summary>
+    /// <summary>朗读高亮鼓点的详细信息：{类型}，判定点{ThisTime}秒，提示点{Tip}秒。</summary>
+    private bool TrySpeakSelectedDrumDetail(string drumCode)
+    {
+        var em = editModel ?? this.GetModel<AudioEditModel>();
+        var drum = UIAttributeSetPanel.FindDrumByCode(em, drumCode);
+        if (drum == null) return false;
+
+        // 类型中文
+        string typeCN = OpToSpeakCN(drum.DrwmsData.DtheTypeOfOperation);
+
+        // 判定点：由 DrumCode 解码
+        DecodeDrumCode(drumCode, out float judgeTime, out _);
+
+        // 提示点：CenterTime - VPreAdventAudioClipOffsetTime
+        float tip = GetTipTime(drum);
+
+        string judgeTxt = mTTS.FormatSecondsForTTS(judgeTime, mTTS.TimeReadStyle.NumericTokens);
+        string tipTxt = mTTS.FormatSecondsForTTS(tip, mTTS.TimeReadStyle.NumericTokens);
+
+        // 示例：点击鼓点，判定点10点50秒，提示点10点00秒。
+        // （TTS 通常会读为“十点五零秒 / 十点零零秒”）
+        mTTS.Speak($"{typeCN}，判定点{judgeTxt}秒，提示点{tipTxt}秒。");
+        return true;
+    }
+
+
+    private static string OpToSpeakCN(TheTypeOfOperation op) => op switch
+    {
+        TheTypeOfOperation.Click => "点击鼓点",
+        TheTypeOfOperation.SwipeLeft => "左滑鼓点",
+        TheTypeOfOperation.SwipeRight => "右滑鼓点",
+        TheTypeOfOperation.SwipeUp => "上滑鼓点",
+        TheTypeOfOperation.SwipeDown => "下滑鼓点",
+        _ => "未知鼓点"
+    };
+
+    /// <summary>
+    /// 通过反射尝试读取 float 字段/属性（兼容不同数据结构版本）。
+    /// </summary>
+    private static float TryGetFloatViaReflection(object obj, string name, float fallback)
+    {
+        if (obj == null) return fallback;
+        var t = obj.GetType();
+
+        // 字段
+        var fi = t.GetField(name, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        if (fi != null && fi.FieldType == typeof(float))
+            return (float)fi.GetValue(obj);
+
+        // 属性
+        var pi = t.GetProperty(name, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        if (pi != null && pi.PropertyType == typeof(float))
+            return (float)pi.GetValue(obj, null);
+
+        return fallback;
+    }
+    // Tip = CenterTime - VPreAdventAudioClipOffsetTime
+    private static float GetTipTime(Qf.ClassDatas.AudioEdit.DrumsLoadData drum)
+    {
+        if (drum == null || drum.DrwmsData == null) return 0f;
+        float center = drum.DrwmsData.CenterTime;
+        float offset = drum.DrwmsData.VPreAdventAudioClipOffsetTime;
+        // 可选：防止出现负数（若业务允许为负可去掉这行）
+        return Mathf.Max(0f, center - offset);
+    }
+
+    #endregion
+
+    /// <summary>
+    /// 脱离选中：清除当前高亮，并禁止自动回选；同时重置 TTS 循环。
+    /// </summary>
+    public void ExitSelectionHighlight()
+    {
+        _noSelectionMode = true;           // 进入“脱离选中模式”
+        selectedDrumCode = null;           // 清掉当前选中
+        foreach (var r in rows) r.SetHighlighted(false);  // 取消所有高亮
+
+        // 关键：立刻按当前 ThisTime 同步一遍“无高亮”到 UI（避免后续事件的残留）
+        if (editModel != null)
+            OnTimeNeedCheck(new OnUpdateThisTime { ThisTime = editModel.ThisTime });
+    }
+    /// <summary>
+    /// 将 seconds 按 60/BPM*(4/BeatB) 量化为 “第{小节}小节第{拍}拍” 文本。
+    /// 采用半开区间 [起点, 下一拍起点)，并在边界 +epsilon 归到后一拍。
+    /// </summary>
+    private string FormatMeasureBeatText(float seconds, out bool ok)
+    {
+        ok = false;
+        var m = editModel ?? this.GetModel<AudioEditModel>();
+        if (m == null || m.BPM <= 0 || m.BeatA <= 0 || m.BeatB <= 0) return string.Empty;
+
+        float beatDuration = 60f / m.BPM * (4f / m.BeatB);
+        if (beatDuration <= 0f) return string.Empty;
+
+        float t = Mathf.Max(0f, seconds + Mathf.Max(0f, boundaryEpsilonSec));  // 半开区间，边界右推
+        int totalBeatIndex = Mathf.FloorToInt(t / beatDuration);               // 全局拍序(0基)
+        int measureIndex = totalBeatIndex / m.BeatA;                          // 小节索引(0基)
+        int beatInMeasure = totalBeatIndex % m.BeatA;                          // 小节内拍(0基)
+
+        ok = true;
+        return $"第{(measureIndex + 1)}小节第{(beatInMeasure + 1)}拍";
+    }
+
+    // 放在类里任意位置
+    private struct NavItem
+    {
+        public float Center;   // 判定点（isTip=false）
+        public float Tip;      // 提示点（isTip=true）
+        public string Code;    // DrumCode
+    }
+
+    // 从模型构建导航列表（一次调用时现算，足够快）
+    private List<NavItem> BuildNavItems()
+    {
+        var res = new List<NavItem>();
+        var dict = editModel?.TimeLineData;
+        if (dict == null) return res;
+
+        foreach (var kv in dict)
+        {
+            float centerKey = kv.Key;                // 你的字典键就是“中心时间”
+            foreach (var d in kv.Value)
+            {
+                if (d?.DrwmsData == null) continue;
+                float center = d.DrwmsData.CenterTime;
+                float tip = GetTipTime(d);           // 已有工具：Center - VPreAdventAudioClipOffsetTime
+                res.Add(new NavItem { Center = center, Tip = tip, Code = d.DrwmsData.DrumCode });
+            }
+        }
+        return res;
     }
 
     public IArchitecture GetArchitecture() => GameBody.Interface;

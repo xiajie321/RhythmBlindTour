@@ -18,7 +18,6 @@ public class SelectManager : ManagerBase
             if (CurrentAttribute == null) return;
             if (CurrentAttribute.GetParameterType().Equals(ParameterType.File))
             {
-                //Debug.Log("ִ��");
                 if (CurrentAttribute != null)
                     ((UIFileAttribute)CurrentAttribute).RunAction(v.SelectValue);
             }
@@ -37,5 +36,6 @@ public class SelectManager : ManagerBase
         {
             CurrentAttribute.transform.DOScale(new Vector3(1.1f, 1.1f, 1.1f), 0.1f).SetEase(Ease.Linear);
         }
+        
     }
 }

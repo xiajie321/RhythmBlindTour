@@ -4,17 +4,20 @@ namespace Qf.ClassDatas.AudioEdit
 {
     public class DrwmsData
     {
-        public Color Color;//颜色
-        public TheTypeOfOperation DtheTypeOfOperation;//鼓点类型
-        public float VTimeOfExistence = 0.5f;//存在时间
-        public float VPreAdventAudioClipOffsetTime = 0.5f;//偏移
-        public float CenterTime = 0f;//真实位置 
-        public string FPreAdventAudioClipPath;//来临前的音频数据路径
-        public string FSucceedAudioClipPath;//成功时的音频数据路径
-        public string FLoseAudioClipPath;//失败时的音频路径
-
-        // [鼓点唯一编号] -- mixyao/07/08
+        public TheTypeOfOperation DtheTypeOfOperation;
+        public string FPreAdventAudioClipPath;
+        public string FSucceedAudioClipPath;
+        public string FLoseAudioClipPath;
+        public float VPreAdventAudioClipOffsetTime;
+        public float VTimeOfExistence;
+        public float CenterTime;
         public string DrumCode;
-    }
 
+        // 新增：预制类型和中心判定标记
+        public int PrefabType = 4;  // 默认 DrumCenter
+        public bool IsCenterDrum = true;
+
+        public string FDefaultAudioClipPath; // 原来是 { get; internal set; }
+        public float VTipPlayOffset;       // 原来是 { get; internal set; }
+    }
 }

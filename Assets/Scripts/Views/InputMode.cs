@@ -102,6 +102,8 @@ public class InputMode : MonoBehaviour, IController
             isAutoJudge = true;
             return;
         }
+
+        
     }
 
     void Update()

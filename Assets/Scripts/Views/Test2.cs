@@ -1,14 +1,16 @@
 using Qf.Events;
 using Qf.Models.AudioEdit;
 using QFramework;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using System.IO;
 using System.Linq;
-using Qf.Querys.AudioEdit;
-using UnityEngine.UI;
-using System.Collections;
-using TMPro;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
+using Newtonsoft.Json.Linq;
+using Qf.ClassDatas.AudioEdit;
+using System;
 
 public class Test2 : MonoBehaviour, IController
 {
@@ -16,216 +18,344 @@ public class Test2 : MonoBehaviour, IController
     public Slider loadingSlider;
     public GameObject loadingPanel;
 
-    public mUIDrumsInspectorPanel inspectorPanel;
-    public UIAudioEditDrumsOrbit drumsOrbit;
+    [Header("唯一注入者（必须存在）")]
+    [SerializeField] private mDefaultAudioInitializer defaultInitializer;
 
-    [Header("节拍与BPM设置管理器")]
-    public mBeatSetManager beatSetManager; // 新增引用，需在Inspector拖拽
+    // ===========================
+    // 导出控制开关（可被 UIToggle.onValueChanged 绑定）
+    // ===========================
+    [Header("Export Toggles")]
+    [Tooltip("开：只导出一个统一 Offset=0；关：导出五类独立 TipOffsetMs")]
+    public bool toggleUnifiedOffset = true;
 
-    private float sliderTarget = 0f;
-    private float sliderSpeed = 2f; // 控制平滑速度
+    [Tooltip("开：每条 Note 附带 \"Type\" 字段；关：不导出 Type")]
+    public bool toggleExportType = false;
 
-    private void Start()
+    [Tooltip("开：额外导出一份 settings.Level（中文键名）；关：只导出 unified.Level")]
+    public bool toggleExportGlobalSettings = true;
+
+    // —— 对外公开的三个 Set 方法（绑定 Toggle 的 OnValueChanged(bool)）
+    public void SetUnifiedOffset(bool value)
     {
-        // 其余UI初始化已移交到 mBeatSetManager
-        StartCoroutine(DelayedAutoLoad());
+        toggleUnifiedOffset = value;
+        Debug.Log("[ExportToggle] UnifiedOffset = " + value);
+    }
+    public void SetExportType(bool value)
+    {
+        toggleExportType = value;
+        Debug.Log("[ExportToggle] ExportType = " + value);
+    }
+    public void SetExportGlobalSettings(bool value)
+    {
+        toggleExportGlobalSettings = value;
+        Debug.Log("[ExportToggle] ExportGlobalSettings(settings.Level) = " + value);
     }
 
-    private IEnumerator DelayedAutoLoad()
-    {
-        if (loadingPanel != null) loadingPanel.SetActive(true);
-        if (loadingSlider != null) loadingSlider.value = 0f;
+    // 与项目一致的操作类型映射
+    const int TYPE_UP = 0;
+    const int TYPE_DOWN = 1;
+    const int TYPE_LEFT = 2;
+    const int TYPE_RIGHT = 3;
+    const int TYPE_TAP = 4;
 
-        sliderTarget = 0f;
-        float actualProgress = 0f;
-        float minLoadTime = 2f;
-        float startTime = Time.realtimeSinceStartup;
-
-        Coroutine sliderCoroutine = StartCoroutine(SmoothSliderRoutine());
-
-        yield return new WaitUntil(() => GameBody.Interface != null);
-        actualProgress = 0.1f; sliderTarget = actualProgress;
-
-        AudioEditModel model = null;
-        while (model == null)
-        {
-            try { model = this.GetModel<AudioEditModel>(); }
-            catch { }
-            yield return null;
-        }
-        actualProgress = 0.2f; sliderTarget = actualProgress;
-
-        yield return StartCoroutine(TryAutoLoadLatestLevelWithProgress(model, p => { actualProgress = p; sliderTarget = actualProgress; }));
-
-        sliderTarget = 1f;
-        float remain = Mathf.Max(0, minLoadTime - (Time.realtimeSinceStartup - startTime));
-        float fillDuration = Mathf.Max(remain, 0.3f); // 最后阶段至少0.3秒推满
-        float before = loadingSlider != null ? loadingSlider.value : 0.99f;
-        float t = 0f;
-        while (loadingSlider != null && loadingSlider.value < 0.999f)
-        {
-            t += Time.deltaTime / fillDuration;
-            loadingSlider.value = Mathf.Lerp(before, 1f, t);
-            yield return null;
-        }
-        yield return new WaitForSeconds(0.2f);
-        if (loadingPanel != null) loadingPanel.SetActive(false);
-        if (sliderCoroutine != null) StopCoroutine(sliderCoroutine);
-    }
-
-    private IEnumerator SmoothSliderRoutine()
-    {
-        while (loadingPanel == null || loadingPanel.activeSelf)
-        {
-            if (loadingSlider != null)
-                loadingSlider.value = Mathf.MoveTowards(loadingSlider.value, sliderTarget, sliderSpeed * Time.deltaTime);
-            yield return null;
-        }
-    }
-
-    private IEnumerator TryAutoLoadLatestLevelWithProgress(AudioEditModel model, System.Action<float> setProgress)
-    {
-        float stepBase = 0.2f;
-        setProgress?.Invoke(stepBase);
-
-        string levelRoot = Path.Combine(Application.streamingAssetsPath, "Levels");
-
-        yield return new WaitForSeconds(0.1f); // 模拟耗时
-        setProgress?.Invoke(stepBase + 0.1f);
-
-        if (!Directory.Exists(levelRoot))
-        {
-            Debug.LogWarning($"[AutoLoad] Level directory not found: {levelRoot}");
-            setProgress?.Invoke(1f);
-            yield break;
-        }
-        setProgress?.Invoke(stepBase + 0.2f);
-
-        var allLevelFiles = Directory.GetFiles(levelRoot, "*.Level", SearchOption.AllDirectories);
-        yield return null;
-        setProgress?.Invoke(stepBase + 0.3f);
-
-        if (allLevelFiles.Length == 0)
-        {
-            Debug.Log("[AutoLoad] No .Level file found.");
-            setProgress?.Invoke(1f);
-            yield break;
-        }
-        setProgress?.Invoke(stepBase + 0.35f);
-
-        string latestFile = allLevelFiles.OrderByDescending(f => File.GetLastWriteTime(f)).First();
-        Debug.Log($"[AutoLoad] Loading latest level file: {latestFile}");
-
-        yield return null;
-        setProgress?.Invoke(stepBase + 0.4f);
-
-        var audioSaveData = this.GetUtility<Storage>().Load<AudioSaveData>(latestFile, true);
-
-        if (audioSaveData == null)
-        {
-            Debug.LogError("[AutoLoad] Failed to load AudioSaveData.");
-
-            // 自动应用默认音频设置
-            var defaultInit = FindObjectOfType<mDefaultAudioInitializer>();
-            if (defaultInit != null)
-            {
-                defaultInit.DoDefaultAudioInit();
-                Debug.Log("[AutoLoad] Default audio settings initialized by mDefaultAudioInitializer.");
-            }
-            setProgress?.Invoke(1f);
-            yield break;
-        }
-
-        // 数据同步阶段
-        setProgress?.Invoke(stepBase + 0.6f);
-        model.EditAudioClipVolume.Value = audioSaveData.EditAudioClipVolume;
-        model.TipOffset.Value = audioSaveData.TipOffset;
-        model.ThisTime = audioSaveData.ThisTime;
-        model.TimeLineData = audioSaveData.TimeLineData;
-        model.TimeOfExistence.Value = audioSaveData.TimeOfExistence;
-        model.EditAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(audioSaveData.EditAudioClip));
-        model.DownSucceedAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(audioSaveData.DownSucceedAudioClip));
-        model.UpSucceedAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(audioSaveData.UpSucceedAudioClip));
-        model.LeftSucceedAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(audioSaveData.LeftSucceedAudioClip));
-        model.RightSucceedAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(audioSaveData.RightSucceedAudioClip));
-        model.ClickSucceedAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(audioSaveData.ClickSucceedAudioClip));
-        model.LoseAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(audioSaveData.LoseAudioClip));
-        model.DefaultAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(audioSaveData.DefaultAudioClip));
-        model.DownTipsAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(audioSaveData.DownTipsAudioClip));
-        model.UpTipsAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(audioSaveData.UpTipsAudioClip));
-        model.LeftTipsAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(audioSaveData.LeftTipsAudioClip));
-        model.RightTipsAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(audioSaveData.RightTipsAudioClip));
-        model.ClickTipsAudioCLip = model.SendQuery(new QueryAudioEditLoadAudio(audioSaveData.ClickTipsAudioCLip));
-
-        setProgress?.Invoke(stepBase + 0.8f);
-
-        this.SendEvent<OnUpdateAudioEditDrumsUI>();
-        this.SendEvent<AudioEditModelLoad>();
-
-        yield return null;
-        setProgress?.Invoke(0.98f);
-
-        // 读取后，刷新节拍UI到model最新数据
-        if (beatSetManager != null)
-            beatSetManager.Init(model);
-    }
-
+    #region 手动外部调用（仅绑定 Model 的 Load/Save）
     public void Load()
     {
-        inspectorPanel.ClearAll();
-        drumsOrbit.ClearAllDrwmsUI();
-
-        this.GetModel<AudioEditModel>().Load();
-
-        // 移除此处的直接同步，由事件驱动
-        // if (beatSetManager != null)
-        //     beatSetManager.SyncModelToUI();
-
-        inspectorPanel.RefreshList();
-        drumsOrbit.ClearAllDrwmsUI();
-    }
-
-    private void OnEnable()
-    {
-        this.RegisterEvent<SelectOptions>(v =>
-        {
-            Debug.Log($"{v.SelectObject.name}");
-        }).UnRegisterWhenDisabled(gameObject);
-
-        // 新增：监听数据加载事件刷新UI
-        this.RegisterEvent<AudioEditModelLoad>(v =>
-        {
-            if (beatSetManager != null)
-                beatSetManager.SyncModelToUI();
-        }).UnRegisterWhenDisabled(gameObject);
+        var model = this.GetModel<AudioEditModel>();
+        model.Load();
     }
 
     public void Save()
     {
-        var mdl = this.GetModel<AudioEditModel>();
-        if (beatSetManager != null)
-            beatSetManager.WriteBackToModel();
-        mdl.Save();
+        var model = this.GetModel<AudioEditModel>();
+        model.Save();
+        var imc = FindObjectOfType<mInputMappingConfigurator>();
+        if (imc) imc.FlushModifiersNow();
     }
+    #endregion
 
-
-
-    /// <summary>
-    /// 仅用于兼容旧调用，不再负责节拍UI刷新
-    /// </summary>
-    private void SyncModelToUI()
+    // ─────────────────────────────────────────────────────────
+    // 总导出：unified.Level（必导） + settings.Level（可选，中文键名）
+    // ─────────────────────────────────────────────────────────
+    /// <summary>统一导出：事件 Level（必导） + 中文键名的全局设置 Level（可选）。</summary>
+    public void ExportUnified()
     {
-        if (beatSetManager != null)
-            beatSetManager.SyncModelToUI();
+        var model = this.GetModel<AudioEditModel>();
+        if (model == null)
+        {
+            Debug.LogError("[Export] AudioEditModel 未找到。");
+            return;
+        }
+
+        // 选择保存基名
+        string basePath = FileLoader.SaveLevelFile();
+        if (string.IsNullOrEmpty(basePath))
+        {
+            Debug.LogWarning("[Export] 用户取消保存对话框，导出终止。");
+            return;
+        }
+
+        // 路径解析：与 Level 同目录、同名但不同前缀
+        string dir = Path.GetDirectoryName(basePath);
+        string stem = Path.GetFileNameWithoutExtension(basePath);
+        if (string.IsNullOrEmpty(dir)) dir = ".";
+
+        // 1) 收集事件数据
+        var buckets = CollectBucketsByOperation(model);
+
+        // 2) 构建 unified（事件）JSON
+        JObject unified = BuildUnifiedJson(model, buckets);
+
+        // 3) 写 unified.Level（事件数据）
+        string unifiedPath = Path.Combine(dir, stem + ".unified.Level");
+        WriteJson(unifiedPath, unified);
+
+        // 4) 如需：构建并写 settings.Level（中文键名的简洁全局设置）
+        string settingsPath = null;
+        if (toggleExportGlobalSettings)
+        {
+            JObject settings = BuildSettingsJson(model);
+            settingsPath = Path.Combine(dir, stem + ".settings.Level");
+            WriteJson(settingsPath, settings);
+        }
+
+        Debug.Log($"[Export] 导出完成：\n{unifiedPath}" + (settingsPath != null ? $"\n{settingsPath}" : ""));
+        var imc = FindObjectOfType<mInputMappingConfigurator>();
+        if (imc) imc.FlushModifiersNow();
+
+#if UNITY_EDITOR
+        UnityEditor.AssetDatabase.Refresh();
+#endif
     }
 
-    public void Run()
+    // ─────────────────────────────────────────────────────────
+    // 事件 JSON（unified.Level）
+    // ─────────────────────────────────────────────────────────
+    private (List<int> tap, List<int> left, List<int> right, List<int> up, List<int> down)
+        CollectBucketsByOperation(AudioEditModel model)
     {
-        this.SendEvent<TestEvent>();
+        var tapSet = new HashSet<int>();
+        var leftSet = new HashSet<int>();
+        var rightSet = new HashSet<int>();
+        var upSet = new HashSet<int>();
+        var downSet = new HashSet<int>();
+
+        var tld = model.TimeLineData ?? new Dictionary<float, List<DrumsLoadData>>();
+        foreach (var kv in tld)
+        {
+            int timeMs = SecToMsInt(kv.Key);
+            var list = kv.Value;
+            if (list == null) continue;
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                var d = list[i]?.DrwmsData;
+                if (d == null) continue;
+
+                int op = (int)d.DtheTypeOfOperation;
+                switch (op)
+                {
+                    case TYPE_TAP: tapSet.Add(timeMs); break;
+                    case TYPE_LEFT: leftSet.Add(timeMs); break;
+                    case TYPE_RIGHT: rightSet.Add(timeMs); break;
+                    case TYPE_UP: upSet.Add(timeMs); break;
+                    case TYPE_DOWN: downSet.Add(timeMs); break;
+                }
+            }
+        }
+
+        var tap = tapSet.ToList(); tap.Sort();
+        var left = leftSet.ToList(); left.Sort();
+        var right = rightSet.ToList(); right.Sort();
+        var up = upSet.ToList(); up.Sort();
+        var down = downSet.ToList(); down.Sort();
+
+        return (tap, left, right, up, down);
     }
 
-    public IArchitecture GetArchitecture()
+    private JObject BuildUnifiedJson(
+        AudioEditModel model,
+        (List<int> tap, List<int> left, List<int> right, List<int> up, List<int> down) buckets)
     {
-        return GameBody.Interface;
+        // Notes（Timing 固定；Type 可选）
+        var tapArr = ToNoteArray(buckets.tap, () => toggleExportType ? "PlaceAtCenter" : null);
+        var leftArr = ToNoteArray(buckets.left, () => toggleExportType ? "PlaceAtCenter" : null);
+        var rightArr = ToNoteArray(buckets.right, () => toggleExportType ? "PlaceAtCenter" : null);
+        var upArr = ToNoteArray(buckets.up, () => toggleExportType ? "PlaceAtCenter" : null);
+        var downArr = ToNoteArray(buckets.down, () => toggleExportType ? "PlaceAtCenter" : null);
+
+        // Offset：统一0 或 分类型（单位毫秒）
+        JToken offsetNode = toggleUnifiedOffset
+            ? new JValue(0)
+            : new JObject
+            {
+                ["Click"] = SecToMsInt(model.TipOffsetClick?.Value ?? 0f),
+                ["SwipeUp"] = SecToMsInt(model.TipOffsetSwipeUp?.Value ?? 0f),
+                ["SwipeDown"] = SecToMsInt(model.TipOffsetSwipeDown?.Value ?? 0f),
+                ["SwipeLeft"] = SecToMsInt(model.TipOffsetSwipeLeft?.Value ?? 0f),
+                ["SwipeRight"] = SecToMsInt(model.TipOffsetSwipeRight?.Value ?? 0f),
+            };
+
+        // 事件根对象（保持英文键，方便逻辑消费）
+        return new JObject
+        {
+            ["AudioOffset"] = SecToMsInt(model.MainAudioOffset?.Value ?? 0f),
+            ["TapNotes"] = tapArr,
+            ["SlideLeftNotes"] = leftArr,
+            ["SlideRightNotes"] = rightArr,
+            ["SlideUpNotes"] = upArr,
+            ["SlideDownNotes"] = downArr,
+            ["TipOffsetMs"] = offsetNode
+        };
     }
+
+    private static JArray ToNoteArray(IEnumerable<int> times, Func<string> typeGetter)
+    {
+        var arr = new JArray();
+        foreach (var t in times)
+        {
+            var note = new JObject { ["Timing"] = t }; // Timing 必导
+            var typeStr = typeGetter?.Invoke();
+            if (!string.IsNullOrEmpty(typeStr))
+                note["Type"] = typeStr;
+            arr.Add(note);
+        }
+        return arr;
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // 设置 JSON（settings.Level）— 中文键名
+    // ─────────────────────────────────────────────────────────
+    private JObject BuildSettingsJson(AudioEditModel model)
+    {
+        // LevelMusic关卡音乐
+        var levelMusic = new JObject
+        {
+            ["AudioName音乐文件"] = SafeName(model.EditAudioClip),
+            ["Volume音量"] = model.EditAudioClipVolume?.Value ?? 1f,
+            ["AudioOffsetMs偏移"] = SecToMsInt(model.MainAudioOffset?.Value ?? 0f)
+        };
+
+        // TipOffsetMs提示音偏移（统一 0 或 分类型）
+        JToken tipOffset = toggleUnifiedOffset
+            ? new JValue(0)
+            : new JObject
+            {
+                ["Click点击鼓点"] = SecToMsInt(model.TipOffsetClick?.Value ?? 0f),
+                ["SwipeUp上滑鼓点"] = SecToMsInt(model.TipOffsetSwipeUp?.Value ?? 0f),
+                ["SwipeDown下滑鼓点"] = SecToMsInt(model.TipOffsetSwipeDown?.Value ?? 0f),
+                ["SwipeLeft左滑鼓点"] = SecToMsInt(model.TipOffsetSwipeLeft?.Value ?? 0f),
+                ["SwipeRight右滑鼓点"] = SecToMsInt(model.TipOffsetSwipeRight?.Value ?? 0f),
+            };
+
+        // Types鼓点（五类）
+        var types = new JObject
+        {
+            ["Click点击鼓点"] = BuildOneTypeBlock_CN(model, TheTypeOfOperation.Click),
+            ["SwipeUp上滑鼓点"] = BuildOneTypeBlock_CN(model, TheTypeOfOperation.SwipeUp),
+            ["SwipeDown下滑鼓点"] = BuildOneTypeBlock_CN(model, TheTypeOfOperation.SwipeDown),
+            ["SwipeLeft左滑鼓点"] = BuildOneTypeBlock_CN(model, TheTypeOfOperation.SwipeLeft),
+            ["SwipeRight右滑鼓点"] = BuildOneTypeBlock_CN(model, TheTypeOfOperation.SwipeRight)
+        };
+
+        // 简洁 settings 根（中文键名）
+        return new JObject
+        {
+            ["LevelMusic关卡音乐"] = levelMusic,
+            ["TipOffsetMs提示音偏移"] = tipOffset,
+            ["Types鼓点"] = types
+        };
+    }
+
+    private JObject BuildOneTypeBlock_CN(AudioEditModel model, TheTypeOfOperation t)
+    {
+        model.TypeSettings.TryGetValue(t, out var ts);
+
+        // 音频名（优先类型默认；否则读全局；Lose/Default 走全局）
+        string tipName = ts?.TipAudio ?? GetTypeTipName(model, t);
+        string succName = ts?.SucceedAudio ?? GetTypeSucceedName(model, t);
+        string loseName = ts?.LoseAudio ?? SafeName(model.LoseAudioClip);
+        string defName = ts?.DefaultAudio ?? SafeName(model.DefaultAudioClip);
+
+        // 时间参数（若类型未设置则回落到全局默认）
+        float exist = !float.IsNaN(ts?.TimeOfExistence ?? float.NaN) ? ts!.TimeOfExistence : model.TimeOfExistence.Value;
+        float tipAdv = !float.IsNaN(ts?.TipAdvance ?? float.NaN) ? ts!.TipAdvance : model.TipOffset.Value;
+        float tipPlay = !float.IsNaN(ts?.TipPlayOffset ?? float.NaN) ? ts!.TipPlayOffset : 0f;
+
+        // 音量（若类型未设置则回落到全局默认）
+        float tipVol = !float.IsNaN(ts?.TipVolume ?? float.NaN) ? ts!.TipVolume : model.PreAdventVolume.Value;
+        float sucVol = !float.IsNaN(ts?.SucceedVolume ?? float.NaN) ? ts!.SucceedVolume : model.SucceedAudioVolume.Value;
+        float loseVol = !float.IsNaN(ts?.LoseVolume ?? float.NaN) ? ts!.LoseVolume : model.LoseAudioVolume.Value;
+        float defVol = !float.IsNaN(ts?.DefaultVolume ?? float.NaN) ? ts!.DefaultVolume : model.DefaultAudioVolume.Value;
+
+        return new JObject
+        {
+            ["Audios音频文件"] = new JObject
+            {
+                ["Tip提示音"] = tipName,
+                ["Succeed回答音"] = succName,
+                ["Lose错误音"] = loseName,
+                ["Default默认音"] = defName
+            },
+            ["Volumes音频音量"] = new JObject
+            {
+                ["Tip提示音"] = tipVol,
+                ["Succeed回答音"] = sucVol,
+                ["Lose错误音"] = loseVol,
+                ["Default默认音"] = defVol
+            },
+            ["Timing鼓点设置"] = new JObject
+            {
+                ["Existence判定时长"] = exist,
+                ["TipAdvance提示音提前"] = tipAdv,
+                ["TipPlayOffset提示音偏移"] = tipPlay
+            }
+        };
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // 工具
+    // ─────────────────────────────────────────────────────────
+    private static int SecToMsInt(float sec)
+    {
+        decimal d = (decimal)sec;
+        decimal ms = d * 1000m;
+        return (int)decimal.Round(ms, 0, MidpointRounding.AwayFromZero);
+    }
+
+    private static void WriteJson(string path, JObject jo)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path) ?? ".");
+        var enc = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false); // UTF-8 无 BOM
+        File.WriteAllText(path, jo.ToString(Newtonsoft.Json.Formatting.Indented), enc);
+        Debug.Log($"[Export][JSON] 写入成功：{path}");
+    }
+
+    private static string SafeName(AudioClip clip) => clip ? clip.name : "";
+
+    private static string GetTypeTipName(AudioEditModel m, TheTypeOfOperation t)
+    {
+        return t switch
+        {
+            TheTypeOfOperation.SwipeUp => SafeName(m.UpTipsAudioClip),
+            TheTypeOfOperation.SwipeDown => SafeName(m.DownTipsAudioClip),
+            TheTypeOfOperation.SwipeLeft => SafeName(m.LeftTipsAudioClip),
+            TheTypeOfOperation.SwipeRight => SafeName(m.RightTipsAudioClip),
+            _ => SafeName(m.ClickTipsAudioClip),
+        };
+    }
+
+    private static string GetTypeSucceedName(AudioEditModel m, TheTypeOfOperation t)
+    {
+        return t switch
+        {
+            TheTypeOfOperation.SwipeUp => SafeName(m.UpSucceedAudioClip),
+            TheTypeOfOperation.SwipeDown => SafeName(m.DownSucceedAudioClip),
+            TheTypeOfOperation.SwipeLeft => SafeName(m.LeftSucceedAudioClip),
+            TheTypeOfOperation.SwipeRight => SafeName(m.RightSucceedAudioClip),
+            _ => SafeName(m.ClickSucceedAudioClip),
+        };
+    }
+
+    public IArchitecture GetArchitecture() => GameBody.Interface;
 }

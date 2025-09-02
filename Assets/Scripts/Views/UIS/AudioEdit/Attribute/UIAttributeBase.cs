@@ -5,11 +5,11 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-public class UIAttributeBase : MonoBehaviour,IController
+public class UIAttributeBase : MonoBehaviour, IController
 {
     [SerializeField]
-    TMP_Text _Name;//ÊôĞÔÃû³Æ
-    ParameterType _ParameterType;//²ÎÊıÀàĞÍ
+    TMP_Text _Name;//å±æ€§åç§°
+    ParameterType _ParameterType;//å‚æ•°ç±»å‹
     Action<object> action;
     public void SetAction(Action<object> action)
     {
@@ -20,7 +20,7 @@ public class UIAttributeBase : MonoBehaviour,IController
         action?.Invoke(value);
     }
     /// <summary>
-    /// ÉèÖÃÏÔÊ¾µÄÃû³Æ
+    /// è®¾ç½®æ˜¾ç¤ºçš„åç§°
     /// </summary>
     /// <param name="Name"></param>
     public void SetName(string Name)
@@ -39,9 +39,11 @@ public class UIAttributeBase : MonoBehaviour,IController
     {
         return GameBody.Interface;
     }
+    // ä¾›å…¨å±€â€œæ˜¯å¦å…è®¸äº¤äº’â€ä¸‹å‘ï¼ˆå¦‚ TTS å…³é—­ï¼‰
+    public virtual void ApplyTTSEnabled(bool enabled) { }
 }
 /// <summary>
-/// ²ÎÊıÀàĞÍ
+/// å‚æ•°ç±»å‹
 /// </summary>
 public enum ParameterType
 {

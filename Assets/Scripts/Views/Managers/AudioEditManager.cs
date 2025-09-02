@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
+
 namespace Qf.Managers
 {
     public class AudioEditManager : MonoBehaviour, IController
@@ -29,7 +30,6 @@ namespace Qf.Managers
         public static AudioEditManager Instance;
         private CreateDrumsManager drumsManager;
 
-
         // [曝露 ControlRun 的激活状态] --mixyao/25/07/02
         public bool IsControlRunning => audioSource != null && audioSource.isPlaying;
 
@@ -38,6 +38,7 @@ namespace Qf.Managers
         /// </summary>
         /// <param name="audioClip"></param>
         int index;
+
         // 新增于public区域
         public AudioSource GetVFXSource(TheTypeOfOperation op)
         {
@@ -60,7 +61,6 @@ namespace Qf.Managers
             primary.clip = clip;
             primary.Play();
         }
-
 
         public void Play(AudioClip[] audioClip, float[] volume = null)
         {
@@ -110,10 +110,12 @@ namespace Qf.Managers
                 }
             }
         }
+
         private void Awake()
         {
             Instance = this;
         }
+
         void Start()
         {
             Init();
@@ -126,6 +128,7 @@ namespace Qf.Managers
                 GetBPM();
             }).UnRegisterWhenGameObjectDestroyed(gameObject);
         }
+
         public void EnterPlayMode()
         {
             this.SendCommand(new SetAudioEditModeCommand(ClassDatas.AudioEdit.SystemModeData.PlayMode));
@@ -138,6 +141,7 @@ namespace Qf.Managers
         {
             this.SendCommand(new SetAudioEditModeCommand(ClassDatas.AudioEdit.SystemModeData.RecordingMode));
         }
+
         float sum;
         bool isRunGetBPM;
         public async void GetBPM()
@@ -168,6 +172,7 @@ namespace Qf.Managers
             this.SendCommand(new SetAudioEditAudioBPMCommand((int)Mathf.Round(sum)));
             return;
         }
+
         void Init()
         {
             editModel = this.GetModel<AudioEditModel>();
@@ -184,8 +189,19 @@ namespace Qf.Managers
             {
                 Debug.Log("切换至-->游玩模式");
                 Mode = 1;
+
+                // ★ 在真正开始播放前，重置鼓点运行态
+                if (drumsManager == null) drumsManager = FindObjectOfType<CreateDrumsManager>();
+                if (drumsManager != null)
+                {
+                    var model = this.GetModel<AudioEditModel>();
+                    float startAt = model != null ? model.ThisTime : 0f;
+                    drumsManager.ResetRuntimeForPlaySession(startAt, destroyExisting: true);
+                }
+
                 PlayMode();
             }).UnRegisterWhenGameObjectDestroyed(gameObject);
+
 
             this.RegisterEvent<OnRecordingMode>(v =>
             {
@@ -214,6 +230,7 @@ namespace Qf.Managers
                 audioSource.time = v.ThisTime;
             }).UnRegisterWhenGameObjectDestroyed(gameObject);
         }
+
         float thisTime;
         float ls;
         void UpdateAll()
@@ -239,22 +256,55 @@ namespace Qf.Managers
         {
             audioSource.Pause();
         }
+
         /// <summary>
-        /// 控制运行,适用于开关
+        /// 【旧】控制运行：播放/暂停切换。
         /// </summary>
+        [Obsolete("请使用 PauseRun()/ResumeRun() 替代，以便直接控制播放状态并与 IsControlRunning 对齐。")]
         public void ControlRun()
         {
             if (editModel.EditAudioClip == null) return;
 
             if (audioSource.isPlaying)
             {
-                ExitPlayMode();
-                mInputModeVisualController.BroadcastPauseToAll(true);  // 事件方式暂停鼓点      //暂停自动失败的计时，以及停止鼓点的移动 - mixyao/06/23 
+                PauseRun();
                 return;
             }
 
+            ResumeRun();
+        }
+
+        /// <summary>
+        /// 暂停（仅当当前处于播放状态时生效）。会广播暂停给可视化控制器。
+        /// </summary>
+        public void PauseRun()
+        {
+            if (audioSource == null) return;
+            if (!audioSource.isPlaying) return;
+
+            ExitPlayMode();
+            mInputModeVisualController.BroadcastPauseToAll(true);  // 事件方式暂停鼓点
+        }
+
+        /// <summary>
+        /// 继续（仅当当前处于暂停状态时生效）。会广播恢复给可视化控制器。
+        /// </summary>
+        public void ResumeRun()
+        {
+            if (editModel == null || editModel.EditAudioClip == null) return;
+            if (audioSource != null && audioSource.isPlaying) return;
+
             PlayMode();
-            mInputModeVisualController.BroadcastPauseToAll(false);     // 事件方式恢复鼓点
+            mInputModeVisualController.BroadcastPauseToAll(false); // 事件方式恢复鼓点
+        }
+
+        /// <summary>
+        /// （可选）根据目标状态直接设置运行状态：true=继续，false=暂停。
+        /// </summary>
+        public void SetControlRunning(bool run)
+        {
+            if (run) ResumeRun();
+            else PauseRun();
         }
 
         void UpdateData()
@@ -263,13 +313,15 @@ namespace Qf.Managers
             audioSource.clip = editModel.EditAudioClip;
             rhythmPlayer.rhythmData = rhythmAnalyzer.Analyze(editModel.EditAudioClip);
         }
-        private float lastThisTime = 0f; // 在类内作为字段保存
 
+        private float lastThisTime = 0f; // 在类内作为字段保存
         private bool wasPlaying = false; // 仅在类内定义一次
+
         private void Update()
         {
             if (!IsControlRunning)
                 return;
+
             bool isNowPlaying = audioSource.isPlaying;
 
             // 刚开始播放（从暂停→播放的瞬间）时，把 lastThisTime 对齐
@@ -302,14 +354,10 @@ namespace Qf.Managers
             wasPlaying = isNowPlaying; // 更新历史状态
         }
 
-
         public void SetLastThisTime(float t)
         {
             lastThisTime = t;
         }
-
-
-
 
         public IArchitecture GetArchitecture()
         {
@@ -328,6 +376,5 @@ namespace Qf.Managers
                 _ => "未知"
             };
         }
-
     }
 }

@@ -37,34 +37,76 @@ public class mInputModeVisualController : MonoBehaviour
         inputMode = GetComponent<InputMode>();
         editModel = inputMode.GetArchitecture().GetModel<AudioEditModel>();
 
-        Vector3 targetPos = judgeLineTarget.position;
-        Vector3 currentPos = transform.position;
+        // —— 统一坐标系：在共同父节点的本地坐标计算“出现位置”和“目标位置”的水平距离 —— 
+        Transform commonParent = transform.parent != null ? transform.parent
+                               : (judgeLineTarget ? judgeLineTarget.parent : null);
+        Vector3 from = commonParent ? commonParent.InverseTransformPoint(transform.position) : transform.position;
+        Vector3 to = commonParent ? commonParent.InverseTransformPoint(judgeLineTarget.position) : judgeLineTarget.position;
 
-        distanceToMove = targetPos.x - currentPos.x;
-        moveDirection = distanceToMove >= 0 ? Vector3.right : Vector3.left;
+        float dx = to.x - from.x;
+        float distanceX = Mathf.Abs(dx);
 
-        float centerTime = (inputMode.StartTime + inputMode.EndTime) / 2f;
-        float timeToReachCenter = centerTime - inputMode.PreAdventTime;
-        moveSpeedPerSecond = Mathf.Abs(distanceToMove) / timeToReachCenter;
+        // —— 时间参数（都来自 InputMode，口径一致）——
+        float start = inputMode.StartTime;                         // 进入判定
+        float end = inputMode.EndTime;                           // 判定结束
+        float center = 0.5f * (start + end);                        // 中心
+        float lead = Mathf.Max(center - inputMode.PreAdventTime, 0f); // ★提示音提前时间长度
 
-        float judgmentDuration = inputMode.EndTime - inputMode.StartTime;
-        float barLength = moveSpeedPerSecond * judgmentDuration;
+        // —— 速度：距离 / 提前时间长度（按你的要求）——
+        if (lead <= 1e-6f || distanceX <= 1e-6f)
+        {
+            moveSpeedPerSecond = 0f;
+        }
+        else
+        {
+            moveSpeedPerSecond = distanceX / lead; // ★ v = s / lead
+        }
 
+        // —— 判定条长度：判定时长 / 速度（= v * 判定时长 也等价）——
+        float judgeDuration = Mathf.Max(end - start, 0f);
+        float barLength = (moveSpeedPerSecond <= 0f) ? 0f : (judgeDuration / (1f / moveSpeedPerSecond)); // = v * judgeDuration
+
+        // —— 视觉口径：鼓点在“条的正中”，条从中心向两侧延展，整体沿 +X 移动 —— 
         if (judgmentBarTransform != null)
         {
-            Vector3 scale = judgmentBarTransform.localScale;
-            scale.x = barLength;
-            judgmentBarTransform.localScale = scale;
+            var s = judgmentBarTransform.localScale;
+            s.x = barLength;
+            judgmentBarTransform.localScale = s;
+
+            // 条的局部位置与鼓点中心对齐（不再把前沿钉在物体上）
+            var lp = judgmentBarTransform.localPosition;
+            lp.x = 0f;                    // ★ 鼓点在条的中间
+            judgmentBarTransform.localPosition = lp;
         }
+
+        // —— 移动方向固定为 +X（画面右侧）——
+        moveDirection = Vector3.right;
+
+        // 可选：如果你希望一开始就把本地 X 归零（视觉上“从 0 开始向右跑”）
+        // transform.localPosition = new Vector3(0f, transform.localPosition.y, transform.localPosition.z);
+
+        // 若需要：记录“到达 target 的世界 X”，后续可用于夹紧（防穿越）
+        _targetWorldX = judgeLineTarget ? judgeLineTarget.position.x : float.PositiveInfinity;
     }
+
+    private float _targetWorldX = float.PositiveInfinity;
 
     void FixedUpdate()
     {
         if (inputMode == null || inputMode.HasJudged || inputMode.PauseAutoFail)
             return;
 
-        float deltaMove = moveSpeedPerSecond * Time.fixedDeltaTime;
-        transform.position += moveDirection * deltaMove;
+        float step = moveSpeedPerSecond * Time.fixedDeltaTime;
+        if (step <= 0f) return;
+
+        // —— 鼓点与判定条一起向 +X 匀速移动 —— 
+        var pos = transform.position;
+        pos += moveDirection * step;
+
+        // 可选：到达 target 后夹紧，避免浮点穿越（不影响判定逻辑，只为视觉贴合）
+        if (pos.x >= _targetWorldX) pos.x = _targetWorldX;
+
+        transform.position = pos;
     }
 
     /// <summary>

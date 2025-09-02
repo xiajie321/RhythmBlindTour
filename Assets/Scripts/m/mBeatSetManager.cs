@@ -13,29 +13,11 @@ public class mBeatSetManager : MonoBehaviour
     private AudioEditModel mdl;
     private readonly int[] beatBOptions = { 1, 2, 4, 8 };
 
-    private void Awake()
-    {
-        // 初始化下拉选项（如已在编辑器设置可省略）
-        if (dropdownBeatA != null)
-        {
-            dropdownBeatA.ClearOptions();
-            dropdownBeatA.AddOptions(new System.Collections.Generic.List<string> { "1", "2", "3", "4", "5", "6" });
-        }
-        if (dropdownBeatB != null)
-        {
-            dropdownBeatB.ClearOptions();
-            dropdownBeatB.AddOptions(new System.Collections.Generic.List<string> { "1", "2", "4", "8" });
-        }
-    }
-
     public void Init(AudioEditModel model)
     {
+        return;
         mdl = model;
 
-        // !!!先刷一次UI
-        SyncModelToUI();
-
-        // 再注册事件监听
         dropdownBeatA.onValueChanged.AddListener(i => mdl.BeatA = i + 1);
         dropdownBeatB.onValueChanged.AddListener(i => mdl.BeatB = beatBOptions[Mathf.Clamp(i, 0, beatBOptions.Length - 1)]);
         inputBPM.onEndEdit.AddListener(str =>

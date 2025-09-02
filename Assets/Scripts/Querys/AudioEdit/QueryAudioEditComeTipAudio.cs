@@ -32,12 +32,13 @@ namespace Assets.Scripts.Querys.AudioEdit
                     audioClip = editModel.LeftTipsAudioClip;
                     break;
                 case TheTypeOfOperation.Click:
-                    audioClip = editModel.ClickTipsAudioCLip;
+                    audioClip = editModel.ClickTipsAudioClip;
                     break;
                 default:
                     audioClip = null;
                     break;
-            };
+            }
+            ;
             return audioClip;
         }
     }

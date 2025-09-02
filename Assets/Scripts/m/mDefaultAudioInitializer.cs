@@ -1,266 +1,288 @@
-using UnityEngine;
 using Qf.Events;
-using Qf.Commands.AudioEdit;
 using Qf.Models.AudioEdit;
+using Qf.Querys.AudioEdit;
 using QFramework;
 using System.Collections;
 using System.Collections.Generic;
-using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
+using System;
+using System.IO;
 
+// 统一的“初始化入口”——所有注入都从这里走
 public class mDefaultAudioInitializer : MonoBehaviour, IController
 {
-    [Header("属性目标顺序对应（主 → 提示）")]
-    public List<UIFileAttribute> targetAttributes = new(); // 12个元素
-    [Header("所有 Audio 数据组")]
-    public List<mAudioDataSO> audioDataList = new();
-    [Header("默认选择编号")]
-    public static int selectedIndex = 0;
+    [Header("主音乐与可视化组件（必须在 Inspector 里拖好）")]
+    [SerializeField] private AudioSource mainAudioSource;       // 主音源（波形、标尺跟随它）
+    [SerializeField] private MonoBehaviour waveformDrawer;      // 波形组件（脚本实例）
+    [SerializeField] private MonoBehaviour timelineRuler;       // 标尺/刻度组件（脚本实例）
+    [SerializeField] private UIAudioEditTimeHand timeHand;      // 时间指针（有的话拖上）
 
-    [Header("初始化使用的 BPM")]
-    public int initialBPM = 120;
+    [Header("面板/轨道（可选，但强烈建议拖齐）")]
+    [SerializeField] private UIMainAttributeSetPanel mainAttrPanel;
+    [SerializeField] private mUIDrumsInspectorPanel inspectorPanel;
+    [SerializeField] private UIAudioEditDrumsOrbit drumsOrbit;
+    [SerializeField] private mBeatSetManager beatSetManager;
 
-    [Header("初始化节拍设置")]
-    public TMP_Dropdown beatADropdown;
-    public TMP_Dropdown beatBDropdown;
-    public int defaultBeatA = 4;
-    public int defaultBeatB = 4;
+    // ========== 对外 API：统一注入入口 ==========
+    public void ApplyFromSaveData(AudioSaveData save)
+    {
+        var model = this.GetModel<AudioEditModel>();
+        if (save == null) { Debug.LogError("[DefaultInit] SaveData 为空"); return; }
 
-    [Header("主音频波形图设置")]
-    public Image waveformImage;
-    public Color waveformColor = Color.yellow;
-    public Color waveformBGColor = Color.clear;
-    public int waveformHeight = 80;
-    [SerializeField] private Vector2Int waveformResolution = new Vector2Int(1024, 128);
+        // 1) 先写回 BPM / 拍号，并广播一次，驱动 UI 文本等
+        if (save.BPM > 0) model.BPM = (int)save.BPM;
+        if (save.BeatA > 0) model.BeatA = save.BeatA;
+        if (save.BeatB > 0) model.BeatB = save.BeatB;
+        this.SendEvent(new BPMChangeValue { BPM = model.BPM });
 
+        // 2) 回填基础参数与时间轴
+        model.EditAudioClipVolume.Value = save.EditAudioClipVolume;
+        model.TipOffset.Value = save.TipOffset;
+        model.TimeOfExistence.Value = save.TimeOfExistence;
+        model.ThisTime = save.ThisTime;
+        model.TimeLineData = save.TimeLineData;
 
+        // 3) 回填所有音频（通过 Query 载入）
+        model.EditAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(save.EditAudioClip));
+        model.DownSucceedAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(save.DownSucceedAudioClip));
+        model.UpSucceedAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(save.UpSucceedAudioClip));
+        model.LeftSucceedAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(save.LeftSucceedAudioClip));
+        model.RightSucceedAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(save.RightSucceedAudioClip));
+        model.ClickSucceedAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(save.ClickSucceedAudioClip));
+        model.LoseAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(save.LoseAudioClip));
+        model.DefaultAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(save.DefaultAudioClip));
+        model.DownTipsAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(save.DownTipsAudioClip));
+        model.UpTipsAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(save.UpTipsAudioClip));
+        model.LeftTipsAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(save.LeftTipsAudioClip));
+        model.RightTipsAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(save.RightTipsAudioClip));
+        model.ClickTipsAudioClip = model.SendQuery(new QueryAudioEditLoadAudio(save.ClickTipsAudioClip));
 
+        // 4) 播放偏移（仅存不应用）
+        model.MainAudioOffset.Value = save.MainAudioOffset;
+        model.TipOffsetSwipeUp.Value = save.TipOffsetSwipeUp;
+        model.TipOffsetSwipeDown.Value = save.TipOffsetSwipeDown;
+        model.TipOffsetSwipeLeft.Value = save.TipOffsetSwipeLeft;
+        model.TipOffsetSwipeRight.Value = save.TipOffsetSwipeRight;
+        model.TipOffsetClick.Value = save.TipOffsetClick;
+
+        // 5) 统一驱动可视化 & 面板 & 事件
+        InjectCommon(model, reason: "ApplyFromSaveData");
+    }
+
+    public void ApplyFromSO(mAudioDataSO so)
+    {
+        var model = this.GetModel<AudioEditModel>();
+        if (so == null)
+        {
+            Debug.LogError("[DefaultInit] mAudioDataSO 为空");
+            return;
+        }
+
+        // 主/默认/失败 音频
+        if (so.MainAudio) model.EditAudioClip = so.MainAudio;
+        if (so.DefaultAudio) model.DefaultAudioClip = so.DefaultAudio;
+        if (so.FailAudio) model.LoseAudioClip = so.FailAudio;
+
+        // 成功音频（上/下/左/右/点击）
+        model.UpSucceedAudioClip = so.SucceedUp;
+        model.DownSucceedAudioClip = so.SucceedDown;
+        model.LeftSucceedAudioClip = so.SucceedLeft;
+        model.RightSucceedAudioClip = so.SucceedRight;
+        model.ClickSucceedAudioClip = so.SucceedClick;
+
+        // 提示音（上/下/左/右/点击）
+        model.UpTipsAudioClip = so.TipsUp;
+        model.DownTipsAudioClip = so.TipsDown;
+        model.LeftTipsAudioClip = so.TipsLeft;
+        model.RightTipsAudioClip = so.TipsRight;
+        model.ClickTipsAudioClip = so.TipsClick;
+
+        // 全局参数
+        model.TipOffset.Value = so.TipOffset;
+        model.TimeOfExistence.Value = so.TimeOfExistence;
+
+        // 音量
+        model.EditAudioClipVolume.Value = Mathf.Clamp01(so.MainAudioVolume);
+        model.SucceedAudioVolume.Value = Mathf.Clamp01(so.SucceedVolume);
+        model.LoseAudioVolume.Value = Mathf.Clamp01(so.LoseVolume);
+        model.DefaultAudioVolume.Value = Mathf.Clamp01(so.DefaultVolume);
+        model.PreAdventVolume.Value = Mathf.Clamp01(so.PreAdventVolume);
+
+        // 播放偏移（仅存储，不参与播放）
+        model.MainAudioOffset.Value = so.MainAudioOffset;
+        model.TipOffsetSwipeUp.Value = so.TipOffsetSwipeUp;
+        model.TipOffsetSwipeDown.Value = so.TipOffsetSwipeDown;
+        model.TipOffsetSwipeLeft.Value = so.TipOffsetSwipeLeft;
+        model.TipOffsetSwipeRight.Value = so.TipOffsetSwipeRight;
+        model.TipOffsetClick.Value = so.TipOffsetClick;
+
+        // 可选：初始时间指针
+        model.ThisTime = Mathf.Max(0f, so.InitialThisTime);
+
+        // 驱动可视化 & 面板
+        InjectCommon(model, reason: "ApplyFromSO");
+    }
+
+    // 兼容你原有的“默认初始化按钮”
     public void DoDefaultAudioInit()
     {
         var model = this.GetModel<AudioEditModel>();
-        model.BeatA = defaultBeatA;
-        model.BeatB = defaultBeatB;
-
-        // 设置 UI dropdown 默认值
-        if (beatADropdown != null)
-            beatADropdown.value = Mathf.Clamp(defaultBeatA - 1, 0, beatADropdown.options.Count - 1);
-
-        if (beatBDropdown != null)
-        {
-            int[] bOptions = { 1, 2, 4, 8 };
-            for (int i = 0; i < bOptions.Length; i++)
-            {
-                if (bOptions[i] == defaultBeatB)
-                {
-                    beatBDropdown.value = i;
-                    break;
-                }
-            }
-        }
-
-        // 确保索引合法
-        if (audioDataList == null || audioDataList.Count == 0 || selectedIndex >= audioDataList.Count)
-        {
-            Debug.LogWarning("无效的音频设置索引");
-            return;
-        }
-
-        mAudioDataSO audioSet = audioDataList[selectedIndex];
-        if (audioSet == null || targetAttributes.Count < 12)
-        {
-            Debug.LogWarning("未正确配置 Target Attributes 或 AudioSet");
-            return;
-        }
-
-        // 构建音频数组顺序
-        AudioClip[] clips = new AudioClip[]
-        {
-            audioSet.MainAudio,          // 0
-            audioSet.FailAudio,          // 1
-            audioSet.DefaultAudio,
-            audioSet.SucceedUp,          // 2
-            audioSet.SucceedDown,        // 3
-            audioSet.SucceedLeft,        // 4
-            audioSet.SucceedRight,       // 5
-            audioSet.SucceedClick,       // 6
-            audioSet.TipsUp,             // 7
-            audioSet.TipsDown,           // 8
-            audioSet.TipsLeft,           // 9
-            audioSet.TipsRight,          //10
-            audioSet.TipsClick           //11
-        };
-
-        for (int i = 0; i < clips.Length; i++)
-        {
-            var clip = clips[i];
-            var attr = targetAttributes[i];
-            if (clip == null || attr == null) continue;
-
-            SelectManager.SetAttribute(attr);
-            attr.SetShowFileName(clip.name);
-            attr.RunAction(clip);
-
-            switch (i)
-            {
-                case 0:
-                    this.SendCommand(new SetAudioEditAudioCommand(clip));
-                    StartCoroutine(DelayedBPMInit(initialBPM));
-                    StartCoroutine(GenerateWaveformFrom(clip));
-                    break;
-                case 1:
-                    this.SendCommand(new SetAudioEditAudioLoseAudioCommand(clip));
-                    break;
-                case 2:
-                    // 修正：设置DefaultAudio
-                    this.SendCommand(new SetAudioEditAudioDefaultAudioCommand(clip));
-                    break;
-                case 3:
-                    this.SendCommand(new SetAudioEditSucceedAudioCommand(TheTypeOfOperation.SwipeUp, clip));
-                    break;
-                case 4:
-                    this.SendCommand(new SetAudioEditSucceedAudioCommand(TheTypeOfOperation.SwipeDown, clip));
-                    break;
-                case 5:
-                    this.SendCommand(new SetAudioEditSucceedAudioCommand(TheTypeOfOperation.SwipeLeft, clip));
-                    break;
-                case 6:
-                    this.SendCommand(new SetAudioEditSucceedAudioCommand(TheTypeOfOperation.SwipeRight, clip));
-                    break;
-                case 7:
-                    this.SendCommand(new SetAudioEditSucceedAudioCommand(TheTypeOfOperation.Click, clip));
-                    break;
-                case 8:
-                    model.UpTipsAudioClip = clip;
-                    break;
-                case 9:
-                    model.DownTipsAudioClip = clip;
-                    break;
-                case 10:
-                    model.LeftTipsAudioClip = clip;
-                    break;
-                case 11:
-                    model.RightTipsAudioClip = clip;
-                    break;
-                case 12:
-                    model.ClickTipsAudioCLip = clip;
-                    break;
-            }
-        }
-
+        // 若你原先这里会给一批默认值，也可继续保留
+        InjectCommon(model, reason: "DoDefaultAudioInit");
     }
 
-    IEnumerator DelayedBPMInit(int bpm)
+    // ========== 内部：把 Model 注入到主音源/波形/标尺/面板/列表 ==========
+    private void InjectCommon(AudioEditModel model, string reason)
     {
+        if (model == null) { Debug.LogError("[DefaultInit] AudioEditModel 为空"); return; }
+
+        // 1) 主音源
+        var clip = model.EditAudioClip != null ? model.EditAudioClip : model.DefaultAudioClip;
+        if (mainAudioSource != null)
+        {
+            mainAudioSource.clip = clip;
+            mainAudioSource.time = Mathf.Clamp(model.ThisTime, 0f, clip ? clip.length : 0f);
+            mainAudioSource.playOnAwake = false;
+        }
+        else
+        {
+            Debug.LogWarning("[DefaultInit] mainAudioSource 未指定：波形/标尺可能不更新。");
+        }
+
+        // 2) 波形 —— 用协程确保加载顺序正确
+        KickWaveformRedraw(clip);
+
+        // 3) 标尺 —— 立刻重建
+        float length = clip ? clip.length : 0f;
+        TryInvokeAny(timelineRuler, "SetAudioSource", mainAudioSource);
+        TryInvokeAny(timelineRuler, "Bind", mainAudioSource);
+        TryInvokeAny(timelineRuler, "SetDuration", length);
+        TryInvokeAny(timelineRuler, "SetLength", length);
+        TryInvokeAny(timelineRuler, "Initialize");
+        TryInvokeAny(timelineRuler, "Rebuild");
+        TryInvokeAny(timelineRuler, "Refresh");
+        TryInvokeAny(timelineRuler, "Redraw");
+
+        // 4) 时间指针（可选居中）
+        if (timeHand != null) timeHand.SetTime(model.ThisTime, true);
+
+        // 5) 让面板/轨道按“面板设置音频”的方式走一次
+        this.SendEvent<OnUpdateAudioEditDrumsUI>();
+        this.SendEvent<AudioEditModelLoad>();
+        inspectorPanel?.EnsureReadyAndRefresh();
+        drumsOrbit?.ClearAllDrwmsUI();
+        beatSetManager?.Init(model);
+        mainAttrPanel?.SendEvent(new AudioEditModelLoad());
+
+        // 6) 关键补丁：下一帧做“与面板设置后等价”的二次重建 + 布局刷新
+        StartCoroutine(PostInitFullRebuild());
+
+        Debug.Log($"[DefaultInit] 注入完成 ← {reason}");
+        this.SendEvent(new OnDefaultInjectionDone());
+    }
+    public struct OnDefaultInjectionDone { }
+
+    // 二次重建：等一帧，保证各面板/标尺完全生成后，再统一刷新
+    private IEnumerator PostInitFullRebuild()
+    {
+        yield return null; // 等一帧：让 UIDrawAScale/波形把子物体建好
+
+        // 再刷新一次标尺/时间轴（等价于你在面板上重新设置音频后做的事）
+        TryInvokeAny(timelineRuler, "Refresh");
+        TryInvokeAny(timelineRuler, "Redraw");
+
+        // 强制刷新 ScrollRect/Scrollbar 几何，修正初始手柄长度与可滚动范围
+        var sr = GetComponentInChildren<ScrollRect>(true);
+        if (sr != null)
+        {
+            if (sr.content != null) LayoutRebuilder.ForceRebuildLayoutImmediate(sr.content);
+            if (sr.viewport != null) LayoutRebuilder.ForceRebuildLayoutImmediate(sr.viewport);
+            Canvas.ForceUpdateCanvases();
+        }
+    }
+
+    // 反射式“尽量调用”，兼容不同组件API命名
+    private static void TryInvokeAny(object target, string methodName, object arg = null)
+    {
+        if (target == null) return;
+        var t = target.GetType();
+
+        System.Reflection.MethodInfo mi = null;
+
+        if (arg == null)
+        {
+            mi = t.GetMethod(methodName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic, null, Type.EmptyTypes, null);
+            if (mi != null) { mi.Invoke(target, null); return; }
+        }
+        else
+        {
+            var argType = arg.GetType();
+            mi = t.GetMethod(methodName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic, null, new[] { argType }, null);
+            if (mi != null) { mi.Invoke(target, new[] { arg }); return; }
+
+            if (arg is AudioSource)
+            {
+                mi = t.GetMethod(methodName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic, null, new[] { typeof(AudioSource) }, null);
+                if (mi != null) { mi.Invoke(target, new[] { arg }); return; }
+            }
+            if (arg is AudioClip)
+            {
+                mi = t.GetMethod(methodName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic, null, new[] { typeof(AudioClip) }, null);
+                if (mi != null) { mi.Invoke(target, new[] { arg }); return; }
+            }
+            if (arg is float)
+            {
+                mi = t.GetMethod(methodName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic, null, new[] { typeof(float) }, null);
+                if (mi != null) { mi.Invoke(target, new object[] { arg }); return; }
+            }
+        }
+    }
+
+    private Coroutine waveformRoutine;
+
+    private void KickWaveformRedraw(AudioClip clip)
+    {
+        if (waveformRoutine != null) StopCoroutine(waveformRoutine);
+        waveformRoutine = StartCoroutine(RebindWaveformRoutine(clip));
+    }
+
+    private IEnumerator RebindWaveformRoutine(AudioClip clip)
+    {
+        // 1) 等待 AudioClip 真正可用
+        if (clip != null)
+        {
+            // 等到 LoadState=Loaded（避免 Streaming/异步未就绪）
+            var start = Time.realtimeSinceStartup;
+            while (clip.loadState == AudioDataLoadState.Loading)
+            {
+                if (Time.realtimeSinceStartup - start > 3f) break; // 最多等3秒，避免卡死
+                yield return null;
+            }
+        }
+
+        // 2) 强制确保波形组件已激活
+        if (waveformDrawer != null && !waveformDrawer.gameObject.activeInHierarchy)
+            waveformDrawer.gameObject.SetActive(true);
+
+        // 3) 强顺序调用一遍（先绑定源/Clip，再初始化，再绘制）
+        TryInvokeAny(waveformDrawer, "SetAudioSource", mainAudioSource);
+        TryInvokeAny(waveformDrawer, "SetSource", mainAudioSource);
+        TryInvokeAny(waveformDrawer, "Bind", mainAudioSource);
+        TryInvokeAny(waveformDrawer, "SetClip", clip);
+        TryInvokeAny(waveformDrawer, "Initialize");
+        TryInvokeAny(waveformDrawer, "Init");
+        TryInvokeAny(waveformDrawer, "Render");
+        TryInvokeAny(waveformDrawer, "Refresh");
+        TryInvokeAny(waveformDrawer, "Redraw");
+        TryInvokeAny(waveformDrawer, "Rebuild");
+
+        // 4) 再等一帧，UI/RectTransform 尺寸稳定后补一次
         yield return null;
-        this.SendCommand(new SetAudioEditAudioBPMCommand(bpm));
-        this.SendEvent(new BPMChangeValue { BPM = bpm });
+        TryInvokeAny(waveformDrawer, "Render");
+        TryInvokeAny(waveformDrawer, "Refresh");
+        TryInvokeAny(waveformDrawer, "Redraw");
     }
 
-    private IEnumerator GenerateWaveformFrom(AudioClip clip, float pps = 100f)
-    {
-        if (clip.loadState != AudioDataLoadState.Loaded)
-        {
-            clip.LoadAudioData();
-            yield return new WaitUntil(() => clip.loadState == AudioDataLoadState.Loaded);
-        }
-
-        int width = Mathf.CeilToInt(clip.length * pps);
-        int height = waveformResolution.y;
-        int halfHeight = height / 2;
-
-        Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, false)
-        {
-            filterMode = FilterMode.Point
-        };
-
-        // 初始化背景颜色
-        Color[] bgColors = new Color[width * height];
-        for (int i = 0; i < bgColors.Length; i++)
-            bgColors[i] = waveformBGColor;
-        tex.SetPixels(bgColors);
-
-        // 获取音频数据
-        int channels = clip.channels;
-        int samples = clip.samples;
-        float[] data = new float[samples * channels];
-        clip.GetData(data, 0);
-        if (data.Length < 10)
-            yield break;
-
-        int packSize = Mathf.Max(1, (int)(clip.frequency / pps));
-        float[] waveform = new float[width];
-        float max = 0f;
-
-        for (int i = 0; i < width; i++)
-        {
-            int startIndex = i * packSize * channels;
-            float sumSquares = 0f;
-            int count = 0;
-
-            for (int j = 0; j < packSize; j++)
-            {
-                for (int c = 0; c < channels; c++)
-                {
-                    int index = startIndex + j * channels + c;
-                    if (index >= data.Length) break;
-                    float sample = data[index];
-                    sumSquares += sample * sample;
-                    count++;
-                }
-            }
-
-            float rms = Mathf.Sqrt(sumSquares / Mathf.Max(1, count));
-            float logRms = Mathf.Pow(rms, 0.6f); // 非线性放大低能区
-            waveform[i] = logRms;
-
-            if (logRms > max) max = logRms;
-        }
-
-        if (max == 0f)
-            max = 1f;
-
-        // 绘制波形（上下对称）
-        for (int x = 0; x < width; x++)
-        {
-            float value = waveform[x] / max;
-            int yExtent = Mathf.Clamp(Mathf.RoundToInt(value * halfHeight), 1, halfHeight);
-            for (int y = halfHeight - yExtent; y <= halfHeight + yExtent; y++)
-            {
-                tex.SetPixel(x, y, waveformColor);
-            }
-        }
-
-        tex.Apply();
-
-        waveformImage.sprite = Sprite.Create(tex, new Rect(0, 0, width, height), new Vector2(0.5f, 0.5f));
-        waveformImage.preserveAspect = true;
-        waveformImage.SetNativeSize();
-
-        if (initialBPM > 0)
-        {
-            waveformImage.rectTransform.sizeDelta = new Vector2(clip.length * pps, waveformResolution.y);
-        }
-
-        UpdateWaveformImageLayout(clip, pps);
-    }
-
-
-    // 更新 Image 尺寸与位置
-    void UpdateWaveformImageLayout(AudioClip clip, float pps)
-    {
-        RectTransform parentRect = waveformImage.transform.parent.GetComponent<RectTransform>();
-        float parentHeight = parentRect.rect.height;
-
-        waveformImage.rectTransform.sizeDelta = new Vector2(clip.length * pps, parentHeight);
-        waveformImage.rectTransform.anchorMin = new Vector2(0, 0.5f);
-        waveformImage.rectTransform.anchorMax = new Vector2(0, 0.5f);
-        waveformImage.rectTransform.pivot = new Vector2(0, 0.5f);
-        waveformImage.rectTransform.anchoredPosition = Vector2.zero;
-    }
-
-
-    public IArchitecture GetArchitecture()
-    {
-        return GameBody.Interface;
-    }
+    public IArchitecture GetArchitecture() => GameBody.Interface;
 }

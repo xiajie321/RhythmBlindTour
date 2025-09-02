@@ -3,44 +3,44 @@ using UnityEngine;
 namespace Qf.Events
 {
     /// <summary>
-    /// ½øÈëÓÎÍæÄ£Ê½
+    /// è¿›å…¥æ¸¸ç©æ¨¡å¼
     /// </summary>
     public struct OnPlayMode { };
     /// <summary>
-    /// ÍË³öÓÎÍæÄ£Ê½
+    /// é€€å‡ºæ¸¸ç©æ¨¡å¼
     /// </summary>
     public struct ExitPlayMode { };
     /// <summary>
-    /// ½øÈë±à¼­Ä£Ê½
+    /// è¿›å…¥ç¼–è¾‘æ¨¡å¼
     /// </summary>
     public struct OnEditMode { };
     /// <summary>
-    /// ÍË³ö±à¼­Ä£Ê½
+    /// é€€å‡ºç¼–è¾‘æ¨¡å¼
     /// </summary>
     public struct ExitEditMode { };
     /// <summary>
-    /// ½øÈëÂ¼ÖÆÄ£Ê½
+    /// è¿›å…¥å½•åˆ¶æ¨¡å¼
     /// </summary>
     public struct OnRecordingMode { };
     /// <summary>
-    /// ÍË³öÂ¼ÖÆÄ£Ê½
+    /// é€€å‡ºå½•åˆ¶æ¨¡å¼
     /// </summary>
     public struct ExitRecordingMode { };
     /// <summary>
-    /// ¸üĞÂµ±Ç°Ê±¼äUI
+    /// æ›´æ–°å½“å‰æ—¶é—´UI
     /// </summary>
     public struct OnUpdateThisTime {
         public float ThisTime;
     };
     /// <summary>
-    /// ³õÊ¼»¯µ±Ç°Ê±¼ä
+    /// åˆå§‹åŒ–å½“å‰æ—¶é—´
     /// </summary>
     public struct OnStartThisTime
     {
         public float ThisTime;
     }
     /// <summary>
-    /// ¸üĞÂ¹ÄµãUI
+    /// æ›´æ–°é¼“ç‚¹UI
     /// </summary>
     public struct OnUpdateAudioEditDrumsUI { };
     public struct BPMChangeValue
@@ -48,14 +48,14 @@ namespace Qf.Events
         public int BPM;
     }
     /// <summary>
-    /// Ö÷ÒôÆµ¸Ä±ä
+    /// ä¸»éŸ³é¢‘æ”¹å˜
     /// </summary>
     public struct MainAudioChangeValue {
         public string Name;
         public float Length;
     };
     /// <summary>
-    /// Ñ¡ÔñÒôÆµ
+    /// é€‰æ‹©éŸ³é¢‘
     /// </summary>
     public struct SelectOptions
     {

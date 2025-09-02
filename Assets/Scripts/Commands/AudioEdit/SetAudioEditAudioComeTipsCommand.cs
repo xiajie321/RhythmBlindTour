@@ -33,7 +33,7 @@ namespace Qf.Commands.AudioEdit
                     editModel.LeftTipsAudioClip = audio;
                     break;
                 case TheTypeOfOperation.Click:
-                    editModel.ClickTipsAudioCLip = audio;
+                    editModel.ClickTipsAudioClip = audio;
                     break;
                 default:
                     break;

@@ -14,6 +14,8 @@ namespace UI
         [Header("UI References")]
         [SerializeField] private Slider slider;
         [SerializeField] private TextMeshProUGUI valueText;
+        [SerializeField] private GameObject frame1;
+        [SerializeField] private GameObject frame2;
         
         private bool isSliding = false;
         private float targetValue;
@@ -38,9 +40,9 @@ namespace UI
         
         protected override void SetNormal()
         {
-            if (sprite != null)
+            if (frame1 != null)
             {
-                sprite.color = new Color(184f/255f,194f/255f,195f/255f,1);
+                frame1.SetActive(false);
             }
             
             // 退出滑动模式
@@ -52,9 +54,9 @@ namespace UI
 
         protected override void SetHighLight()
         {
-            if (sprite != null)
+            if (frame1 != null)
             {
-                sprite.color = new Color(0.22f, 0.17f, 0.15f); // 深色高亮
+                frame1.SetActive(true);
             }
         }
         
@@ -102,9 +104,10 @@ namespace UI
             }
             
             // 橙色表示滑动模式
-            if (sprite != null)
+            if (frame2 !=null)
             {
-                sprite.color = new Color(1f, 0.5f, 0f);
+                frame2.SetActive(true);
+                frame1.SetActive(false);
             }
         }
         
@@ -119,6 +122,7 @@ namespace UI
             // 恢复高亮状态
             if (IsFocused)
             {
+                frame2.SetActive(false);
                 SetHighLight();
             }
         }

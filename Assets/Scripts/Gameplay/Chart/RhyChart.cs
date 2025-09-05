@@ -75,6 +75,7 @@ namespace Gameplay.Chart
         {
             if (instance != null) UnityEngine.Object.Destroy(instance);
             instance = null;
+            transform = null;
         }
     }
 
@@ -200,7 +201,7 @@ namespace Gameplay.Chart
 
         public override RhyEvent Clone()
         {
-            return new RhySlideUpNote()
+            return new RhySlideDownNote()
             {
                 Timing = Timing,
             };

@@ -1,3 +1,4 @@
+using Gameplay.Managers;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.InputSystem;
@@ -21,6 +22,8 @@ namespace UI
         private float targetValue;
         private float lastTapTime = 0f;
         private float tapCooldown = 0.2f; // 200毫秒冷却时间
+
+        private bool isLastFrameHaveInput = false;
         
         protected override void Awake()
         {
@@ -57,6 +60,8 @@ namespace UI
             if (frame1 != null)
             {
                 frame1.SetActive(true);
+                gameObject.name.RB_Say();
+                RhyAudioManager.Instance.PlayTip();
             }
         }
         
@@ -79,10 +84,16 @@ namespace UI
                 if (InputManager.Instance.inputMap.Gameplay.Left.ReadValue<float>() > 0.5f)
                 {
                     horizontalInput = -1f;
+                    isLastFrameHaveInput = true;
                 }
                 else if (InputManager.Instance.inputMap.Gameplay.Right.ReadValue<float>() > 0.5f)
                 {
                     horizontalInput = 1f;
+                    isLastFrameHaveInput = true;
+                }else if (isLastFrameHaveInput)
+                {
+                    valueText.text.RB_Say();
+                    isLastFrameHaveInput = false;
                 }
             }
             
@@ -102,7 +113,9 @@ namespace UI
             {
                 targetValue = slider.value;
             }
-            
+
+            RB_TTS.RB_Say("可以滑动");
+            RhyAudioManager.Instance.PlayTip();
             // 橙色表示滑动模式
             if (frame2 !=null)
             {

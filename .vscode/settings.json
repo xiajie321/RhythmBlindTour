@@ -56,5 +56,6 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "RhythmBlindTour.sln"
+    "dotnet.defaultSolution": "RhythmBlindTour.sln",
+    "dotnet.preferCSharpExtension": true
 }

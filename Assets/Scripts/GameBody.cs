@@ -8,8 +8,8 @@ public class GameBody : Architecture<GameBody>
 {
     protected override void Init()
     {
-        //ÔÚÕâÀï¶ÔÊý¾ÝÒÔ¼°ÏµÍ³½øÐÐ×¢²á
-        Debug.Log("[GameBody] ³õÊ¼»¯¼ÓÔØÖÐ...");
+        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½ÏµÍ³ï¿½ï¿½ï¿½ï¿½×¢ï¿½ï¿½
+        Debug.Log("[GameBody] ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½...");
         Models();
         Systems();
         Utilitys();
@@ -18,18 +18,18 @@ public class GameBody : Architecture<GameBody>
     private void Utilitys()
     {
         RegisterUtility(new Storage());
-        Debug.Log("[GameBody] Utility¼ÓÔØÍê±Ï");
+        Debug.Log("[GameBody] Utilityï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
     }
 
     void Models()
     {
         RegisterModel(new DataCachingModel());
         RegisterModel(new AudioEditModel());
-        Debug.Log("[GameBody] Model¼ÓÔØÍê±Ï");
+        Debug.Log("[GameBody] Modelï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
     }
     void Systems()
     {
         RegisterSystem(new InputSystems());
-        Debug.Log("[GameBody] System¼ÓÔØÍê±Ï");
+        Debug.Log("[GameBody] Systemï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
     }
 }

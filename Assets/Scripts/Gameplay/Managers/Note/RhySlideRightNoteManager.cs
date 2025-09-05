@@ -12,6 +12,13 @@ namespace Gameplay.Managers.Note
         {
             Instance = this;
         }
+        
+        private void Start()
+        {
+            Init();
+            // 设置音效音量
+            audioSource.volume = PlayerPrefs.GetFloat("IntervalSoundVolume", 40f) / 100f;
+        }
 
         public List<RhySlideRightNote> Notes = new();
         public float Lanes;
@@ -21,11 +28,24 @@ namespace Gameplay.Managers.Note
         public AudioSource audioSource;
         public AudioClip TapNoteSound;
         public AudioClip TapSuccessSound;
+        public AudioClip FailSound;
         public int previewTiming = 1000;
         public int judgeDuration = 110;
 
+        public int perfectCount = 0;
+        public int missCount = 0;
+
         public void Init()
         {
+            foreach (var t in Notes)
+            {
+                if (t.transform != null)
+                {
+                    DestroyImmediate(t.transform.gameObject);
+                }
+                t.Destroy();
+            }
+            
             foreach (var t in Notes)
             {
                 t.Instantiate();
@@ -40,8 +60,23 @@ namespace Gameplay.Managers.Note
             {
                 JudgeTapNote();
             }
+            PlayFailedSound();
+            audioSource.volume = PlayerPrefs.GetFloat("TipSoundVolume", 40f) / 100f;
         }
-
+        private void PlayFailedSound()
+        {
+            foreach (var t in Notes)
+            {
+                if (t.Judged || !t.Enable) continue;
+                if (RhyGameplayManager.Instance.ChartTiming - t.Timing > judgeDuration / 2)
+                {
+                    t.Judged = true;
+                    missCount++;
+                    audioSource.PlayOneShot(FailSound);
+                    return;
+                }
+            }
+        }
         private void PlayPreviewSound()
         {
             if (RhyGameplayManager.Instance.IsPlaying)
@@ -93,8 +128,13 @@ namespace Gameplay.Managers.Note
                 float currentTime = RhyGameplayManager.Instance.ChartTiming;
                 if (Mathf.Abs(currentTime - t.Timing) < judgeDuration)
                 {
+                    perfectCount++;
                     t.Judged = true;
                     audioSource.PlayOneShot(TapSuccessSound);
+                }
+                else
+                {
+                    Debug.Log($"{t.Timing}:{currentTime - t.Timing}");
                 }
             }
 
@@ -103,7 +143,8 @@ namespace Gameplay.Managers.Note
 
         private bool TryJudge()
         {
-            return RhyGameplayManager.Instance.IsPlaying && InputManager.Instance.CheckSlideLeft();
+            return RhyGameplayManager.Instance.IsPlaying && InputManager.Instance.CheckSlideRight();
         }
+
     }
 }

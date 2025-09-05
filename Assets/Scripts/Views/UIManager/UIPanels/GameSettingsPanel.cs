@@ -1,6 +1,4 @@
 using System.Globalization;
-using Qf.Models;
-using QFramework;
 using TMPro;
 using UI;
 using UnityEngine;
@@ -9,7 +7,7 @@ using UnityEngine.UI;
 
 namespace Views.UIManager.UIPanels
 {
-    public class GameSettingsPanel : BasePanel, ICanGetModel
+    public class GameSettingsPanel : BasePanel
     {
         public Slider musicVolume;
         public Slider tipSoundVolume;
@@ -24,30 +22,32 @@ namespace Views.UIManager.UIPanels
         public Block backBtn;
         protected override void Init()
         {
-            var model = this.GetModel<GameSettingModel>();
+            // 加载保存的音量设置
+            LoadVolumeSettings();
+            
             musicVolume.onValueChanged.AddListener((v) =>
             {
                 v *= 100;
                 musicVolumeText.text = Mathf.RoundToInt(v).ToString(CultureInfo.InvariantCulture);
-                model.musicVolume = v;
+                PlayerPrefs.SetFloat("MusicVolume", v);
             });
             tipSoundVolume.onValueChanged.AddListener((v) =>
             {
                 v *= 100;
                 tipSoundVolumeText.text = Mathf.RoundToInt(v).ToString(CultureInfo.InvariantCulture);
-                model.tipSoundVolume = v;
+                PlayerPrefs.SetFloat("TipSoundVolume", v);
             });
             intervalSoundVolume.onValueChanged.AddListener((v) =>
             {
                 v *= 100;
                 intervalSoundVolumeText.text = Mathf.RoundToInt(v).ToString(CultureInfo.InvariantCulture);
-                model.intervalSoundVolume = v;
+                PlayerPrefs.SetFloat("IntervalSoundVolume", v);
             });
             readerVolume.onValueChanged.AddListener((v) =>
             {
                 v *= 100;
                 readerVolumeText.text = Mathf.RoundToInt(v).ToString(CultureInfo.InvariantCulture);
-                model.readerVolume = v;
+                PlayerPrefs.SetFloat("ReaderVolume", v);
             });
             
             backBtn.OnClick+=(() =>
@@ -57,9 +57,26 @@ namespace Views.UIManager.UIPanels
             });
         }
 
-        public IArchitecture GetArchitecture()
+        private void LoadVolumeSettings()
         {
-            return UIArchitecture.Interface;
+            // 加载音量设置，默认值为40
+            float musicVol = PlayerPrefs.GetFloat("MusicVolume", 40f);
+            float tipVol = PlayerPrefs.GetFloat("TipSoundVolume", 40f);
+            float intervalVol = PlayerPrefs.GetFloat("IntervalSoundVolume", 40f);
+            float readerVol = PlayerPrefs.GetFloat("ReaderVolume", 40f);
+            
+            // 设置滑块值（0-1范围）
+            musicVolume.value = musicVol / 100f;
+            tipSoundVolume.value = tipVol / 100f;
+            intervalSoundVolume.value = intervalVol / 100f;
+            readerVolume.value = readerVol / 100f;
+            
+            // 设置文本显示
+            musicVolumeText.text = Mathf.RoundToInt(musicVol).ToString(CultureInfo.InvariantCulture);
+            tipSoundVolumeText.text = Mathf.RoundToInt(tipVol).ToString(CultureInfo.InvariantCulture);
+            intervalSoundVolumeText.text = Mathf.RoundToInt(intervalVol).ToString(CultureInfo.InvariantCulture);
+            readerVolumeText.text = Mathf.RoundToInt(readerVol).ToString(CultureInfo.InvariantCulture);
         }
+
     }
 }

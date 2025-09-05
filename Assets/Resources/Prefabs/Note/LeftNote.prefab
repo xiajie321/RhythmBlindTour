@@ -13,6 +13,10 @@ PrefabInstance:
       value: LeftNote
       objectReference: {fileID: 0}
     - target: {fileID: 6375826007240795388, guid: 46aaf2bdaa53eb144b3096368948b781, type: 3}
+      propertyPath: m_LocalScale.x
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6375826007240795388, guid: 46aaf2bdaa53eb144b3096368948b781, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}

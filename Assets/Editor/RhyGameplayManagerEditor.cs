@@ -9,6 +9,7 @@ public class RhyGameplayManagerEditor : Editor
     {
         base.OnInspectorGUI();
         if (!Application.isPlaying) return;
+        GUILayout.Button(RhyGameplayManager.Instance.ChartTiming.ToString());
         GUILayout.BeginHorizontal();
         if (GUILayout.Button("Play"))
         {

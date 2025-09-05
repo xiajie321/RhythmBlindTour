@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Gameplay.Chart;
 using Gameplay.Managers;
 using Gameplay.Managers.Note;
@@ -97,17 +98,43 @@ namespace Gameplay
                 }
             }
 
-            if (AudioTiming > Length)
+            if (AudioTiming > Length&&IsPlaying)
             {
                 OnMusicEnd.Invoke();
                 Pause();
                 Views.UIManager.UIManager.Instance.ShowPanel<LevelCompletionPanel>();
-                
             }
         }
 
         public void Play()
         {
+            // reset counters when starting play
+            if (RhyTapNoteManager.Instance != null)
+            {
+                RhyTapNoteManager.Instance.perfectCount = 0;
+                RhyTapNoteManager.Instance.missCount = 0;
+            }
+            if (RhySlideLeftNoteManager.Instance != null)
+            {
+                RhySlideLeftNoteManager.Instance.perfectCount = 0;
+                RhySlideLeftNoteManager.Instance.missCount = 0;
+            }
+            if (RhySlideRightNoteManager.Instance != null)
+            {
+                RhySlideRightNoteManager.Instance.perfectCount = 0;
+                RhySlideRightNoteManager.Instance.missCount = 0;
+            }
+            if (RhySlideUpNoteManager.Instance != null)
+            {
+                RhySlideUpNoteManager.Instance.perfectCount = 0;
+                RhySlideUpNoteManager.Instance.missCount = 0;
+            }
+            if (RhySlideDownNoteManager.Instance != null)
+            {
+                RhySlideDownNoteManager.Instance.perfectCount = 0;
+                RhySlideDownNoteManager.Instance.missCount = 0;
+            }
+
             IsPlaying = true;
             RhyAudioManager.Instance.Play();
         }
@@ -131,7 +158,7 @@ namespace Gameplay
             RhySlideDownNoteManager.Instance.ResetJudgeAndPreview();
         }
 
-        public void LoadChart(string s="test")
+        public void LoadChart(string s = "test")
         {
             chart = new();
             chart = JsonMgr.Instance.LoadData<RhyChart>(s);
@@ -147,8 +174,36 @@ namespace Gameplay
             RhySlideUpNoteManager.Instance.Init();
             RhySlideDownNoteManager.Instance.Init();
 
-            Length = 180000;
+            foreach (var t in chart.TapNotes)
+            {
+                Length = Mathf.Max(Length, t.Timing);
+            }
+
+            foreach (var t in chart.SlideLeftNotes)
+            {
+                Length = Mathf.Max(Length, t.Timing);
+            }
+
+            foreach (var t in chart.SlideRightNotes)
+            {
+                Length = Mathf.Max(Length, t.Timing);
+            }
+
+            foreach (var t in chart.SlideUpNotes)
+            {
+                Length = Mathf.Max(Length, t.Timing);
+            }
+
+            foreach (var t in chart.SlideDownNotes)
+            {
+                Length = Mathf.Max(Length, t.Timing);
+            }
+
+            Length += 2000;
             Reset();
+            
+            Play();
         }
+        
     }
 }

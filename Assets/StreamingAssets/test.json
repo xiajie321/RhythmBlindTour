@@ -2,92 +2,95 @@
   "AudioOffset": 0,
   "TapNotes": [
     {
-      "Timing": 2110
+      "Timing": 16550
     },
     {
-      "Timing": 4320
+      "Timing": 20540
     },
     {
-      "Timing": 6820
+      "Timing": 32630
     },
     {
-      "Timing": 9100
+      "Timing": 34590
     },
     {
-      "Timing": 11530
+      "Timing": 36550
     },
     {
-      "Timing": 13810
+      "Timing": 38560
     },
     {
-      "Timing": 16150
+      "Timing": 40480
     },
     {
-      "Timing": 18410
+      "Timing": 42550
     },
     {
-      "Timing": 20780
+      "Timing": 48560
     },
     {
-      "Timing": 23100
+      "Timing": 50550
     },
     {
-      "Timing": 25460
+      "Timing": 52510
     },
     {
-      "Timing": 27730
+      "Timing": 54580
     },
     {
-      "Timing": 30130
+      "Timing": 56520
     },
     {
-      "Timing": 32450
+      "Timing": 58530
     },
     {
-      "Timing": 34880
+      "Timing": 60530
     },
     {
-      "Timing": 37160
+      "Timing": 70550
     },
     {
-      "Timing": 39510
+      "Timing": 72510
     },
     {
-      "Timing": 41880
-    },
-    {
-      "Timing": 44200
-    },
-    {
-      "Timing": 46100
-    },
-    {
-      "Timing": 48750
-    },
-    {
-      "Timing": 51220
-    },
-    {
-      "Timing": 53550
-    },
-    {
-      "Timing": 55890
-    },
-    {
-      "Timing": 58200
-    },
-    {
-      "Timing": 60560
-    },
-    {
-      "Timing": 62880
-    },
-    {
-      "Timing": 65130
+      "Timing": 78580
     }
   ],
-  "SlideLeftNotes": [],
-  "SlideRightNotes": [],
+  "SlideLeftNotes": [
+    {
+      "Timing": 24550
+    },
+    {
+      "Timing": 44530
+    },
+    {
+      "Timing": 64550
+    },
+    {
+      "Timing": 68520
+    },
+    {
+      "Timing": 76550
+    }
+  ],
+  "SlideRightNotes": [
+    {
+      "Timing": 28600
+    },
+    {
+      "Timing": 46520
+    },
+    {
+      "Timing": 62580
+    },
+    {
+      "Timing": 66480
+    },
+    {
+      "Timing": 74520
+    }
+  ],
   "SlideUpNotes": [],
-  "SlideDownNotes": []
+  "SlideDownNotes": [],
+  "TipOffsetMs": 0
 }

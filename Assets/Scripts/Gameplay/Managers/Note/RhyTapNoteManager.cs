@@ -22,27 +22,31 @@ namespace Gameplay.Managers.Note
         public AudioSource audioSource;
         public AudioClip TapNoteSound;
         public AudioClip TapSuccessSound;
+        public AudioClip FailSound;
         public int previewTiming = 1000;
         public int judgeDuration=110;
+
+        public int perfectCount = 0;
+        public int missCount = 0;
 
         private void Start()
         {
             Init();
+            // 设置音效音量
+            audioSource.volume = PlayerPrefs.GetFloat("IntervalSoundVolume", 40f) / 100f;
         }
 
         public void Init()
         {
-            List<GameObject> children = new List<GameObject>();
-            
-            foreach (Transform child in NoteLayer.transform)
+            foreach (var t in Taps)
             {
-                children.Add(child.gameObject);
+                if (t.transform != null)
+                {
+                    DestroyImmediate(t.transform.gameObject);
+                }
+                t.Destroy();
             }
             
-            foreach (GameObject child in children)
-            {
-                Destroy(child);
-            }
             foreach (var t in Taps)
             {
                 t.Instantiate();
@@ -56,8 +60,23 @@ namespace Gameplay.Managers.Note
             {
                 JudgeTapNote();
             }
+            PlayFailedSound();
+            audioSource.volume = PlayerPrefs.GetFloat("TipSoundVolume", 40f) / 100f;
         }
-
+        private void PlayFailedSound()
+        {
+            foreach (var t in Taps)
+            {
+                if (t.Judged || !t.Enable) continue;
+                if (RhyGameplayManager.Instance.ChartTiming - t.Timing > judgeDuration / 2)
+                {
+                    t.Judged = true;
+                    missCount++;
+                    audioSource.PlayOneShot(FailSound);
+                    return;
+                }
+            }
+        }
         private void PlayPreviewSound()
         {
             if (RhyGameplayManager.Instance.IsPlaying)
@@ -114,6 +133,8 @@ namespace Gameplay.Managers.Note
                 float currentTime = RhyGameplayManager.Instance.ChartTiming;
                 if (Mathf.Abs(currentTime - t.Timing) < judgeDuration)
                 {
+                    Debug.Log(t.Timing+ ":成功");
+                    perfectCount++;
                     t.Judged = true;
                     audioSource.PlayOneShot(TapSuccessSound);
                 }
@@ -121,5 +142,6 @@ namespace Gameplay.Managers.Note
 
             return true;
         }
+
     }
 }

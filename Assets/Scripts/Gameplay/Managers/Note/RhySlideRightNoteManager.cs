@@ -126,15 +126,12 @@ namespace Gameplay.Managers.Note
             {
                 if (t.Judged) continue;
                 float currentTime = RhyGameplayManager.Instance.ChartTiming;
-                if (Mathf.Abs(currentTime - t.Timing) < judgeDuration)
+                float  offset = PlayerPrefs.GetFloat("offset", 0f);
+                if (Mathf.Abs(currentTime-offset - t.Timing) < judgeDuration)
                 {
                     perfectCount++;
                     t.Judged = true;
                     audioSource.PlayOneShot(TapSuccessSound);
-                }
-                else
-                {
-                    Debug.Log($"{t.Timing}:{currentTime - t.Timing}");
                 }
             }
 

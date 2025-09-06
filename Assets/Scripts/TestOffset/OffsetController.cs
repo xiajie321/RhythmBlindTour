@@ -49,6 +49,8 @@ namespace TestOffset
                     isPlaying = false;
                     var offset = CalculateOffset();
                     total.text = $"{offset:N0}ms";
+                    RB_TTS.RB_Say($"偏移{offset:N0}");
+                    PlayerPrefs.SetFloat("offset",(float)offset);
                 }
             }).UnRegisterWhenGameObjectDestroyed(gameObject);
 
@@ -87,6 +89,8 @@ namespace TestOffset
             audioSource.PlayScheduled(time);
             Debug.Log($"开始时间：{time}");
             startTime = time;
+
+            RB_TTS.RB_Say("第四拍时按下W");
         }
 
         public IArchitecture GetArchitecture()

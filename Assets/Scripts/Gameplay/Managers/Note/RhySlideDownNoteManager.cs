@@ -13,7 +13,7 @@ namespace Gameplay.Managers.Note
         {
             Instance = this;
         }
-        
+
         private void Start()
         {
             Init();
@@ -44,9 +44,10 @@ namespace Gameplay.Managers.Note
                 {
                     DestroyImmediate(t.transform.gameObject);
                 }
+
                 t.Destroy();
             }
-            
+
             foreach (var t in Notes)
             {
                 t.Instantiate();
@@ -130,7 +131,8 @@ namespace Gameplay.Managers.Note
             {
                 if (t.Judged) continue;
                 float currentTime = RhyGameplayManager.Instance.ChartTiming;
-                if (Mathf.Abs(currentTime - t.Timing) < judgeDuration)
+                float offset = PlayerPrefs.GetFloat("offset", 0f);
+                if (Mathf.Abs(currentTime - offset - t.Timing) < judgeDuration)
                 {
                     perfectCount++;
                     t.Judged = true;
@@ -145,6 +147,5 @@ namespace Gameplay.Managers.Note
         {
             return RhyGameplayManager.Instance.IsPlaying && InputManager.Instance.CheckSlideDown();
         }
-
     }
 }

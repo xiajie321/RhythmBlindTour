@@ -1,3 +1,4 @@
+using System.Collections;
 using Gameplay;
 using Gameplay.Managers.Note;
 using TMPro;
@@ -28,9 +29,18 @@ namespace Views.UIManager.UIPanels
                 UIManager.Instance.HidePanel<LevelCompletionPanel>();
                 UIManager.Instance.ShowPanel<LevelSelectionPanel>();
             };
-          
+
+            StartCoroutine(ShowPoint());
+            
             ShowPnM();
         }
+
+        private IEnumerator ShowPoint()
+        {
+            yield return new WaitForSeconds(0.5f);
+            RB_TTS.RB_Say($"成功率{PnM.text}");
+        }
+
 
         private void ShowPnM()
         {
@@ -76,10 +86,10 @@ namespace Views.UIManager.UIPanels
             {
                 PnM.text = $"{p}/{total}";
             }
-
+            
             if (point != null)
             {
-                point.text = $"{accPercent*100:N0}";
+                point.text = $"{accPercent * 100:N0}";
             }
         }
     }
